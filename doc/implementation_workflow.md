@@ -103,3 +103,9 @@ CI の 3 ジョブは `.github/workflows/ci.yml`。`#[cfg(target_os = "...")]` �
 - バンドルされていないデバッグバイナリには AppleEvent の quit が届かないため、終了時保存の経路は手動確認（トレイの Quit）に頼る。非表示時にも位置を保存するようにして依存を減らした
 - 開発起動でバイナリに引数を渡すには `npm run tauri dev -- -- -- --hidden`（`--` が 3 つ：npm / Tauri CLI / cargo がそれぞれ 1 つ消費）
 - メインウィンドウは `visible: false` で生成し、`bootstrap` で表示判定する（`--hidden` と起動時のちらつき対策を兼ねる）
+
+### 5.1 frontend の IPC・ストア・i18n
+- ストアは `svelte/store` で書き、Tauri の `invoke` / `listen` は**インターフェース（`ItemsApi` 等）で注入**する。これで Vitest（node 環境）だけでストアの挙動を検証でき、Tauri の実行環境は不要
+- 「コンポーネントは `lib/ipc` 以外から Tauri を import しない」という設計制約は、**ESLint の `no-restricted-imports`** で機械的に担保した（レビューの目視に頼らない）
+- 文言は後続タスクの分まで先に ja/en に揃え、キー集合の一致をテストで固定。文言追加時は両方に入れないとテストが落ちる
+- `.kiro/specs/` 配下に空ファイル（`clipbuf@0.1.0`, `tauri`）が生成されていた。npm の出力をシェルに貼り付けたときのリダイレクト事故と思われる。削除した
