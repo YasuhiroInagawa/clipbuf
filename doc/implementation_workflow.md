@@ -59,3 +59,9 @@ CI の 3 ジョブは `.github/workflows/ci.yml`。`#[cfg(target_os = "...")]` �
 - 転送変換の適用順（7.12）は、各変換が「空白→空白または削除」のため出力から観測できない。テストは複合結果のみを検証し、順序は実装の構造で担保
 - Rust テスト 33 件、Vitest 15 件。次の 3.x からクリップボード（OS 依存）に入る
 - 2.1 のコミットは新規の JSON fixture に Prettier をかけ忘れて CI の lint が 3 OS で落ちた（次のコミットで解消）。**タスクの境界に関係なく、コミット前に `npm run lint` を必ず通す**
+
+### 3.1–3.2 クリップボード層
+- OS 依存コードに入る前に **スパイク（使い捨ての `examples/`）で `clipboard-rs` の実挙動を macOS で確認**した：自分の書き込みに独自形式（マーカー）を載せると `available_formats` に残る、`pbcopy` からのコピーは 200ms 間隔のポーリングで約 200ms で検知、秘匿形式名が `available_formats` に現れる。設計の前提がすべて成立したので本実装へ
+- 実クリップボードを触るテストは `#[ignore]` にし、`cargo test -- --ignored` で macOS 上で手動実行する。CI では走らない（Linux ランナーにディスプレイがない）
+- Windows / X11 のコードは Mac ではコンパイルされないため、**コミット → push → CI 3 OS 成功を確認してからタスク完了**にした（今回は一発で成功）
+- 発見：`clipboard-rs` 0.3.5 は `wayland` feature で Wayland（data-control）にネイティブ対応し、`WAYLAND_DISPLAY` で実行時に切り替える。設計時の調査（X11 のみ）から更新されているため、3.3 の方針を見直す
