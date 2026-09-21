@@ -738,6 +738,8 @@ pub struct SettingsDiff { pub capacity: bool, pub hotkey: bool, pub autostart: b
 #### window / tray / hotkey / platform
 
 - `window.rs`: `main` ウィンドウは `tauri.conf.json` で `alwaysOnTop: true, skipTaskbar: true, visibleOnAllWorkspaces: true, decorations: true, resizable: true, minWidth 360, minHeight 240`。`CloseRequested` を `prevent_close` して `hide()`。`toggle()` は表示時に `set_focus` + `window-shown` 送出。`settings` ウィンドウは初回要求時に `WebviewWindowBuilder` で生成（ラベル `settings`、`alwaysOnTop: false`）。macOS は `ActivationPolicy::Accessory`（Dock に出さない）
+  - **Settings の配置**: 最前面のメインウィンドウに隠れないよう、メインの右隣 → 左隣 → 下の順で、メインと同じモニタ内に置く（`place_beside`、純粋関数）
+  - **Settings とメインの表示同期**: メインを隠す操作（ホットキー / トレイ / 閉じる / `hide_window`）は開いている Settings も隠し、次にメインを表示したとき一緒に復帰させる。Settings を終えるのはユーザーのクローズ操作のみ（「clipbuf を隠す＝全体をどける」という利用意図に合わせた実装時の判断）
 - `tray.rs`: メニュー「表示/非表示」「設定」「終了」。左クリックで toggle
 - `hotkey.rs`: `register(shortcut)` は既存を解除してから登録。失敗時は既存を再登録して `HotkeyUnavailable`
 - 起動引数 `--hidden`（autostart plugin の `args`）でウィンドウを非表示のまま起動（9.5）

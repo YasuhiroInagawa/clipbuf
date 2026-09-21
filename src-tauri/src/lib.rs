@@ -13,7 +13,14 @@ pub mod transform;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Development builds log to stderr (warn+ by default, RUST_LOG overrides). Release builds
+    // stay quiet; item content is never logged in either (10.5).
+    if cfg!(debug_assertions) {
+        let _ = env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("warn"))
+            .try_init();
+    }
     tauri::Builder::default()
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             app::bootstrap(app.handle())?;
             Ok(())
@@ -27,6 +34,7 @@ pub fn run() {
             app::commands::set_settings,
             app::commands::get_platform_info,
             app::commands::hide_window,
+            app::commands::open_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

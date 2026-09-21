@@ -69,6 +69,12 @@ pub fn get_platform_info(state: State<'_, SharedState>) -> PlatformInfo {
 }
 
 #[tauri::command]
-pub fn hide_window(window: tauri::WebviewWindow) {
-    let _ = window.hide();
+pub fn hide_window(app: tauri::AppHandle) {
+    super::window::hide(&app);
+}
+
+#[tauri::command]
+pub fn open_settings(app: tauri::AppHandle) -> Result<(), AppError> {
+    super::window::open_settings(&app)
+        .map_err(|_| AppError::from(crate::model::ErrorKind::SettingsIo))
 }

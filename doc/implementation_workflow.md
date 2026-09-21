@@ -90,3 +90,9 @@ CI の 3 ジョブは `.github/workflows/ci.yml`。`#[cfg(target_os = "...")]` �
 - Tauri の `#[tauri::command]` は**関数名がそのままフロントのコマンド名**になるため、ロジック関数と同名にできない。ロジックを `app/ops.rs`（Tauri 非依存・テスト対象）に置き、`app/commands.rs` は同名の薄いラッパーだけにした
 - フロントへのイベント送出は `EventSink` トレイト経由。テストでは記録用シンク、本番は `TauriSink(AppHandle)`。これでコマンドのロジックも `FakeClipboard` だけで統合テストできる
 - `bootstrap` を実装したことで `npm run tauri dev` の起動時に設定ファイルが生成され、取り込みスレッドが走る状態になった。UI がまだ無いので、起動と設定ファイル生成をスモークテストとした
+
+### 4.4 ウィンドウ・トレイ・ホットキー
+- ホットキーの「差し替え失敗時は旧を復元」規則は、プラグインを `Registrar` トレイトで抽象化してフェイクで単体テストした。`Shortcut` の `Display` は修飾キー順を正規化する（`alt+shift` → `shift+alt`）ので、比較は解析済みの値で行う
+- **実機確認が必要な項目（キー押下、トレイクリック）は AppleScript の権限がなく自動化できないため、ユーザーに手順を渡して確認してもらった**。その際、**私がバックグラウンドで起動した開発インスタンスがポート 1420 を掴んだままでユーザーの `tauri dev` が失敗した**。以後、確認を依頼する前に自分の起動分は必ず止める
+- ユーザー確認から 2 点の UX 改善を取り込んだ：Settings ウィンドウの配置（メインの横）、メインと Settings の表示・非表示同期。仕様に無かった振る舞いは design.md に追記してから実装
+- `env_logger` を `debug_assertions` 時のみ初期化。`RUST_LOG=clipbuf_lib=debug npm run tauri dev` でモジュールのログが見える
