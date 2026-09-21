@@ -41,3 +41,10 @@ export function createI18n(initial: Language): I18n {
     setLanguage: (l) => language.set(l),
   };
 }
+
+/** App-wide instance. The settings store switches it when the saved language changes. */
+export const i18n: I18n = createI18n(
+  resolveInitialLanguage(null, typeof navigator === 'undefined' ? '' : navigator.language),
+);
+/** Convenience: `$t('key')` in components. */
+export const t = i18n.t;

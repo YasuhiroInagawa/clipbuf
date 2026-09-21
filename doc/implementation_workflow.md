@@ -109,3 +109,9 @@ CI の 3 ジョブは `.github/workflows/ci.yml`。`#[cfg(target_os = "...")]` �
 - 「コンポーネントは `lib/ipc` 以外から Tauri を import しない」という設計制約は、**ESLint の `no-restricted-imports`** で機械的に担保した（レビューの目視に頼らない）
 - 文言は後続タスクの分まで先に ja/en に揃え、キー集合の一致をテストで固定。文言追加時は両方に入れないとテストが落ちる
 - `.kiro/specs/` 配下に空ファイル（`clipbuf@0.1.0`, `tauri`）が生成されていた。npm の出力をシェルに貼り付けたときのリダイレクト事故と思われる。削除した
+
+### 5.2 最初の Svelte コンポーネント
+- コンポーネントテストは `@testing-library/svelte` + `jsdom`。Vitest の既定環境は node のまま、コンポーネントテストだけ先頭の `/** @vitest-environment jsdom */` で切り替える（純粋モジュールのテストを速いままにする）
+- `vite.config.ts` に `svelteTesting()` プラグイン、`src/test-setup.ts` に jest-dom のマッチャを追加
+- i18n はモジュールシングルトン（`t` ストア）をコンポーネントが直接 import。テストでは `i18n.setLanguage('en')` で固定
+- 表示の目視確認はリストを組み立てる 5.4 でまとめて行う（部品単体は DOM テストで担保）
