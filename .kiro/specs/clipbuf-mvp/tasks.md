@@ -78,7 +78,7 @@
   - Windows / Linux(X11) のコードが CI でビルドされる
   - _Requirements: 1.1, 1.2, 1.8, 11.3_
 
-- [ ] 3.3 (P) Wayland 対応を有効化する（Linux のみ）
+- [x] 3.3 (P) Wayland 対応を有効化する（Linux のみ）
   - `clipboard-rs` の `wayland` feature を有効にし、Linux では `WAYLAND_DISPLAY` の有無でクレートが Wayland（data-control）/ X11 を実行時に選ぶ構成にする
   - 取り込み能力の判定を、クレートが選んだバックエンドに基づいて確定する（Wayland → 完全、X11 かつ Wayland セッション → XWayland 限定、X11 のみ → 完全）
   - 書き込み時のマーカー・秘匿マークは MIME 名（`application/x-clipbuf-marker` 等）で扱われ、`available_formats` に現れる

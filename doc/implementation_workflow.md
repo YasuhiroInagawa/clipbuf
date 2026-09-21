@@ -65,3 +65,8 @@ CI の 3 ジョブは `.github/workflows/ci.yml`。`#[cfg(target_os = "...")]` �
 - 実クリップボードを触るテストは `#[ignore]` にし、`cargo test -- --ignored` で macOS 上で手動実行する。CI では走らない（Linux ランナーにディスプレイがない）
 - Windows / X11 のコードは Mac ではコンパイルされないため、**コミット → push → CI 3 OS 成功を確認してからタスク完了**にした（今回は一発で成功）
 - 発見：`clipboard-rs` 0.3.5 は `wayland` feature で Wayland（data-control）にネイティブ対応し、`WAYLAND_DISPLAY` で実行時に切り替える。設計時の調査（X11 のみ）から更新されているため、3.3 の方針を見直す
+
+### 3.3 Wayland（設計変更）
+- 設計時の調査が古かった例。実装フェーズで依存クレートのソースを読んで判明したため、**design.md / research.md / tasks.md / steering を先に更新してコミットし、それから実装**した（仕様と実装のずれを残さない）
+- 自前 `WaylandAdapter` は不要になり、`clipboard-rs` の `wayland` feature 有効化と `capability_for`（純粋関数）の追加だけで完了。Linux 固有のバックエンド判定は `cfg(target_os = "linux")` の 1 関数に閉じた
+- Linux ターゲット限定の依存（`wl-clipboard-rs`）は macOS / Windows のビルドに影響しない。CI 3 OS で確認
