@@ -5,15 +5,20 @@
 //! `wayland` for Linux Wayland) and a `FakeClipboard` exists for tests.
 
 use std::sync::mpsc::Sender;
+use std::time::Duration;
 
 pub mod clipboard_rs;
 pub mod conceal;
 pub mod marker;
+pub mod unavailable;
+
+#[cfg(target_os = "macos")]
+pub mod macos_access;
 
 #[cfg(test)]
 pub mod fake;
 
-use crate::model::{CaptureCapability, ClipboardSnapshot};
+use crate::model::{CaptureCapability, ClipboardSnapshot, Settings};
 
 /// Notification from an adapter's watcher. Content is read separately via `read`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -63,6 +68,24 @@ pub trait ClipboardPort: Send + Sync {
 
     /// What this adapter can observe in the current environment (11.3–11.6).
     fn capability(&self) -> CaptureCapability;
+}
+
+/// Choose the clipboard implementation for this process (11.3–11.6).
+///
+/// `clipboard-rs` already picks Wayland or X11 on Linux; here we only handle the two things
+/// it cannot express: no clipboard at all (headless, init failure) and macOS access denial.
+pub fn select_adapter(settings: &Settings) -> Box<dyn ClipboardPort> {
+    let poll = Duration::from_millis(u64::from(settings.poll_interval_ms));
+    match clipboard_rs::ClipboardRsAdapter::new(poll) {
+        Ok(mut adapter) => {
+            #[cfg(target_os = "macos")]
+            if macos_access::is_denied() {
+                adapter.override_capability(CaptureCapability::Denied);
+            }
+            Box::new(adapter)
+        }
+        Err(_) => Box::new(unavailable::UnavailableClipboard),
+    }
 }
 
 #[cfg(test)]

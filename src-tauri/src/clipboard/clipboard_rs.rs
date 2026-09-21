@@ -47,6 +47,11 @@ impl ClipboardRsAdapter {
             capability,
         })
     }
+
+    /// Replace the detected capability, e.g. with `Denied` when macOS blocks pasteboard access.
+    pub fn override_capability(&mut self, capability: CaptureCapability) {
+        self.capability = capability;
+    }
 }
 
 /// Which clipboard backend `clipboard-rs` selected.

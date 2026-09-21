@@ -332,3 +332,49 @@ mod clipboard_rs_adapter {
         assert_eq!(snap.html, None);
     }
 }
+
+mod selection {
+    use super::super::unavailable::UnavailableClipboard;
+    use super::super::{ClipError, ClipboardPort, WritePayload, select_adapter};
+    use crate::model::{CaptureCapability, Settings};
+    use std::sync::mpsc;
+
+    #[test]
+    fn unavailable_clipboard_reports_itself_and_fails_every_operation() {
+        let port = UnavailableClipboard;
+        assert_eq!(port.capability(), CaptureCapability::Unavailable);
+        assert_eq!(port.read(), Err(ClipError::Unavailable));
+        assert_eq!(
+            port.write(WritePayload {
+                text: "x",
+                html: None,
+                rtf: None
+            }),
+            Err(ClipError::Unavailable)
+        );
+        // Watching an unavailable clipboard is a no-op that never sends anything.
+        let (tx, rx) = mpsc::channel();
+        assert_eq!(port.start_watch(tx), Ok(()));
+        assert!(rx.try_recv().is_err());
+    }
+
+    /// On the development Mac (with a pasteboard) selection yields a working adapter.
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn select_adapter_on_macos_yields_full_capability() {
+        let port = select_adapter(&Settings::default());
+        assert_eq!(port.capability(), CaptureCapability::Full);
+    }
+
+    /// Headless Linux (CI) has neither DISPLAY nor WAYLAND_DISPLAY: selection must degrade
+    /// to the unavailable adapter instead of panicking.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn select_adapter_without_display_is_unavailable() {
+        if std::env::var_os("DISPLAY").is_some() || std::env::var_os("WAYLAND_DISPLAY").is_some() {
+            return; // a desktop session; covered by the manual platform checklist
+        }
+        let port = select_adapter(&Settings::default());
+        assert_eq!(port.capability(), CaptureCapability::Unavailable);
+    }
+}

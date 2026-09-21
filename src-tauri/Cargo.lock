@@ -351,6 +351,8 @@ dependencies = [
  "clipboard-rs",
  "encoding_rs",
  "log",
+ "objc2",
+ "objc2-app-kit",
  "serde",
  "serde_json",
  "tauri",
