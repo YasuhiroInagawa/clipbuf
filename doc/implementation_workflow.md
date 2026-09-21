@@ -115,3 +115,32 @@ CI の 3 ジョブは `.github/workflows/ci.yml`。`#[cfg(target_os = "...")]` �
 - `vite.config.ts` に `svelteTesting()` プラグイン、`src/test-setup.ts` に jest-dom のマッチャを追加
 - i18n はモジュールシングルトン（`t` ストア）をコンポーネントが直接 import。テストでは `i18n.setLanguage('en')` で固定
 - 表示の目視確認はリストを組み立てる 5.4 でまとめて行う（部品単体は DOM テストで担保）
+
+### 5.4 項目リストとメインウィンドウ（実装済み・手動確認は途中）
+- `MainWindow` は `MainContext`（stores + `MainApi`）を 1 つの props で受ける。テストはフェイクの `MainApi` で 13 件（描画、クリック転送とハイライト、ホバーボタン、通知、キー操作、バナー、`window-shown`、全削除）
+- 実画面の確認用にテストデータを `pbcopy` で投入するときは **`LANG=ja_JP.UTF-8` を付ける**。ツールのシェルはロケール未設定で、非 ASCII が化けた（「①」が「竭」になった）
+- `screencapture` は「画面収録」権限が必要で、ユーザーに権限要求ダイアログが出てしまう。**使わない**。画面の確認はユーザーに依頼するか、スクリーンショットを貼ってもらう
+- ホバー時の代替転送ボタンの表示（暫定の「T」「=」）は分かりにくいとの指摘あり。ラベル/記号の案を出して未決
+
+## 次回の再開手順（5.4 の手動確認から）
+
+1. アプリ起動（ユーザー側のターミナルで）
+   ```bash
+   npm run tauri dev
+   ```
+2. テストデータ投入（別ターミナル。UTF-8 ロケール必須）
+   ```bash
+   export LANG=ja_JP.UTF-8
+   printf 'hello\tworld  \n' | pbcopy; sleep 1
+   printf 'カタカナ　全角スペース\r\nCRLF行\n2行目' | pbcopy; sleep 1
+   printf '  leading spaces and ① NEC char' | pbcopy; sleep 1
+   printf 'zero\xe2\x80\x8bwidth and nbsp\xc2\xa0here' | pbcopy
+   ```
+3. 確認項目
+   - 記号（→ · ↵ □ ∅ ⍽）と警告アイコン（⎵ ⇥ ㊙ ⏎、ホバーで説明）
+   - 行クリック → 緑のハイライト → 他アプリに貼り付けできる。順序と選択が変わらない
+   - ホバーの「T」（プレーン）「=」（元のまま）ボタン ← 表示の改善案を決める
+   - ↑↓ / Enter / Shift+Enter / Delete / Escape
+   - トグル変更（例：改行 → 空白）が転送に反映され、再起動後も残る
+   - 「すべて削除」と空表示
+4. 確認できたら `tasks.md` の 5.4 を `[x]` にしてコミット → 5.5（設定ウィンドウ）へ
