@@ -50,3 +50,11 @@ CI の 3 ジョブは `.github/workflows/ci.yml`。`#[cfg(target_os = "...")]` �
 - Rust の `model` と TS の `src/lib/ipc/types.ts` を **1 つの fixture JSON（`tests/fixtures/contract.json`）** で相互に固定する方式にした。Rust 側はデシリアライズ→再シリアライズが fixture と一致すること、TS 側は enum 定数配列と key 集合が fixture と一致することを検証する。片側だけ変えると両方のテストが落ちる（変異テストで確認済み）
 - `model` は他層を import しない。テストであっても上向き依存（`crate::app`）は置かず、イベント名の検証は `app/events.rs` 側に置いた
 - frontend へ渡す `CaptureCapability` / `PlatformInfo` は設計上 `clipboard` 寄りだが、依存の向き（`clipboard` → `model`）を守るため `model` に配置
+
+### 2.1–2.4 コア純粋ロジック（まとめて実施）
+- 4 タスクとも OS 非依存で、Mac の単体テストだけで完結した。順序は **2.1 → 2.4 → 2.2 → 2.3**（不可視文字の分類表を Rust と TS で共有するため、2.1 の直後に 2.4）
+- 分類表は 1.4 と同じ方式で `tests/fixtures/charset.json` に置き、Rust（`analysis/charset.rs`）と TS（`preview/charset.ts`）の両方のテストが同じ fixture を読む
+- 機種依存文字は `encoding_rs` の SHIFT_JIS エンコード結果が CP932 拡張範囲かで判定。JIS 標準と NEC 行 13 の両方にある「≒」は標準側に符号化されるため非該当になる（意図どおり）
+- `tauri init` が `Cargo.toml` の `tauri` 行を書き換えていたため、テキスト置換での依存追加が空振りした。**依存追加は `cargo add` を使う**
+- 転送変換の適用順（7.12）は、各変換が「空白→空白または削除」のため出力から観測できない。テストは複合結果のみを検証し、順序は実装の構造で担保
+- Rust テスト 33 件、Vitest 15 件。次の 3.x からクリップボード（OS 依存）に入る
