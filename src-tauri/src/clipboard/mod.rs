@@ -70,6 +70,23 @@ pub trait ClipboardPort: Send + Sync {
     fn capability(&self) -> CaptureCapability;
 }
 
+/// Sharing a port between the runtime state and another owner (tests, the tray) is common;
+/// `Arc<T>` forwards to `T`.
+impl<T: ClipboardPort + ?Sized> ClipboardPort for std::sync::Arc<T> {
+    fn start_watch(&self, sender: Sender<ClipboardEvent>) -> Result<(), ClipError> {
+        (**self).start_watch(sender)
+    }
+    fn read(&self) -> Result<ClipboardSnapshot, ClipError> {
+        (**self).read()
+    }
+    fn write(&self, payload: WritePayload<'_>) -> Result<(), ClipError> {
+        (**self).write(payload)
+    }
+    fn capability(&self) -> CaptureCapability {
+        (**self).capability()
+    }
+}
+
 /// Choose the clipboard implementation for this process (11.3–11.6).
 ///
 /// `clipboard-rs` already picks Wayland or X11 on Linux; here we only handle the two things
