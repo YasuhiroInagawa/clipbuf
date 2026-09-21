@@ -9,7 +9,7 @@
   - 新しいシェルで `cargo --version` と `rustc --version` が表示される
   - _Requirements: 11.1_
 
-- [ ] 1.2 Tauri 2 + Svelte 5 + TypeScript のプロジェクト雛形を作成する
+- [x] 1.2 Tauri 2 + Svelte 5 + TypeScript のプロジェクト雛形を作成する
   - `npm run tauri dev` で空のメインウィンドウが起動し、常に最前面・タスクバー非表示・全ワークスペース表示・リサイズ可（最小 360×240）である
   - 仮の識別子（例: `jp.gr.mac.iyas.clipbuf`）と製品名 `clipbuf` を設定する（最終名はリリース前に確定）
   - CSP を `default-src 'self'` とし、外部リソースを読み込まない
