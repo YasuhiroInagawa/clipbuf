@@ -75,3 +75,8 @@ CI の 3 ジョブは `.github/workflows/ci.yml`。`#[cfg(target_os = "...")]` �
 - `cfg(target_os)` で分岐するコードは、**Mac でクリーンでも他 OS では `unused mut` / 未使用 import で clippy が落ちる**ことがある。対策：(a) cfg 分岐は関数ごと切り替える（`#[cfg] fn f(mut x)` / `#[cfg(not)] fn f(x)`）、(b) 各 OS 用のテストを用意して import を全 OS で使う
 - CI の 3 OS それぞれで `select_adapter` の実環境テストが走る：macOS = Full、Windows = Full（ランナーに実クリップボードあり）、Linux = Unavailable（ヘッドレス）。これで「ディスプレイなしでも落ちない」経路が毎回検証される
 - macOS の `accessBehavior`（15.4+）は `respondsToSelector` でガードし、古い macOS でのクラッシュを防ぐ。`objc2-app-kit` は `[target.'cfg(target_os = "macos")'.dependencies]` に置き、`NSPasteboard` feature だけ有効化
+
+### 4.1 設定ストア（設計変更）
+- `tauri-plugin-store` をやめて素の JSON ファイルにした。理由：設定は Rust からしか触らない、tempdir で単体テストが完結する、プラグインの最新公開版が alpha。Tauri 依存は `load(&AppHandle)` のパス解決 1 行に閉じ込め、ロジック（validate / sanitize / diff）は純粋関数
+- 破損ファイル・部分ファイル・型違いの値は**フィールド単位で既定値に戻す**（ファイル全体を捨てない）。不正な更新は書き込み前に拒否
+- 書き込みは一時ファイル → rename の原子的更新。ディレクトリ作成失敗は `SettingsIo` で返し、パニックさせない
