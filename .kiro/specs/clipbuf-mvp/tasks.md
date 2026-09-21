@@ -17,7 +17,7 @@
   - Frontend に ESLint + Prettier + Vitest を設定し、`npm run lint` と `npm test`（サンプルテスト 1 件）が通る
   - _Requirements: 8.1, 8.7, 10.3, 10.4_
 
-- [ ] 1.3 3 OS の CI ワークフローを構築する
+- [x] 1.3 3 OS の CI ワークフローを構築する
   - push / pull_request で ubuntu / windows / macos の 3 ジョブが走り、Linux は webkit2gtk・gtk3・appindicator・librsvg・xcb の依存を導入する
   - 各ジョブで lint、Vitest、`cargo fmt --check`、`cargo clippy -- -D warnings`、`cargo test`、`cargo build` を実行する
   - 3 ジョブすべてが緑になった状態で main に取り込まれている
