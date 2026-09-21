@@ -45,3 +45,8 @@ CI の 3 ジョブは `.github/workflows/ci.yml`。`#[cfg(target_os = "...")]` �
 - Windows ランナーは git が LF→CRLF 変換するため Prettier（`endOfLine: lf`）が全ファイルで失敗した。**`.gitattributes` で `* text=auto eol=lf`** を指定して解決
 - Linux ランナーには Tauri の依存（webkit2gtk-4.1, gtk3, ayatana-appindicator3, librsvg2）に加え、後のクリップボード実装（x11rb / XFixes）で必要になる `libxcb-*-dev` を先に入れてある
 - `cargo build` の前に `npm run build` を走らせ、`frontendDist`（`dist/`）が存在する状態にしている
+
+### 1.4 共有型契約
+- Rust の `model` と TS の `src/lib/ipc/types.ts` を **1 つの fixture JSON（`tests/fixtures/contract.json`）** で相互に固定する方式にした。Rust 側はデシリアライズ→再シリアライズが fixture と一致すること、TS 側は enum 定数配列と key 集合が fixture と一致することを検証する。片側だけ変えると両方のテストが落ちる（変異テストで確認済み）
+- `model` は他層を import しない。テストであっても上向き依存（`crate::app`）は置かず、イベント名の検証は `app/events.rs` 側に置いた
+- frontend へ渡す `CaptureCapability` / `PlatformInfo` は設計上 `clipboard` 寄りだが、依存の向き（`clipboard` → `model`）を守るため `model` に配置

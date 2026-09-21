@@ -23,7 +23,7 @@
   - 3 ジョブすべてが緑になった状態で main に取り込まれている
   - _Requirements: 11.1_
 
-- [ ] 1.4 Rust と frontend で共有する型契約を定義する
+- [x] 1.4 Rust と frontend で共有する型契約を定義する
   - 項目・警告 7 種・転送オプション（改行モード 3 択を含む）・転送モード・設定（既定値と許容範囲を含む）・転送結果・エラー種別を Rust の型として定義し、camelCase の JSON に serde 化する
   - 同じ形の TypeScript 型を frontend 側に定義する
   - Rust → frontend のイベント名（項目追加・一覧変更・設定変更・表示・取り込み状態）と payload の対応を定数として定義する

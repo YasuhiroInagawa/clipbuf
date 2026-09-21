@@ -1,0 +1,80 @@
+{
+  "itemDto": {
+    "id": 42,
+    "capturedAtMs": 1758400000000,
+    "text": "hello\tworld\r\n",
+    "hasStyle": true,
+    "warnings": ["hasStyle", "edgeWhitespace", "hasTab"]
+  },
+  "warnings": [
+    "hasStyle",
+    "edgeWhitespace",
+    "hasTab",
+    "platformDependent",
+    "controlOrBinary",
+    "mixedNewlines",
+    "encodingNotice"
+  ],
+  "transferOptions": {
+    "keepStyle": true,
+    "newline": "space",
+    "trim": true,
+    "tabsToSpaces": false,
+    "fullwidthToSpace": true
+  },
+  "newlineModes": ["keep", "remove", "space"],
+  "transferModes": ["options", "plain", "raw"],
+  "settings": {
+    "version": 1,
+    "capacity": 50,
+    "hotkey": "CmdOrCtrl+Shift+V",
+    "tabWidth": 2,
+    "pollIntervalMs": 300,
+    "autostart": true,
+    "language": "en",
+    "transfer": {
+      "keepStyle": false,
+      "newline": "remove",
+      "trim": false,
+      "tabsToSpaces": true,
+      "fullwidthToSpace": false
+    }
+  },
+  "defaultSettings": {
+    "version": 1,
+    "capacity": 20,
+    "hotkey": "Alt+Shift+V",
+    "tabWidth": 4,
+    "pollIntervalMs": 200,
+    "autostart": false,
+    "language": null,
+    "transfer": {
+      "keepStyle": false,
+      "newline": "keep",
+      "trim": false,
+      "tabsToSpaces": false,
+      "fullwidthToSpace": false
+    }
+  },
+  "transferOutcome": { "skippedTransforms": true },
+  "appError": { "kind": "hotkeyUnavailable" },
+  "errorKinds": [
+    "itemNotFound",
+    "writeFailed",
+    "readFailed",
+    "hotkeyUnavailable",
+    "invalidSettings",
+    "captureUnavailable",
+    "settingsIo"
+  ],
+  "captureCapabilities": ["full", "limitedXWayland", "unavailable", "denied"],
+  "captureStatuses": ["full", "limitedXWayland", "unavailable", "denied", "readFailed"],
+  "platformInfo": { "os": "macos", "displayServer": "quartz", "capture": "full" },
+  "events": {
+    "itemAdded": "clipbuf://item-added",
+    "itemsChanged": "clipbuf://items-changed",
+    "settingsChanged": "clipbuf://settings-changed",
+    "windowShown": "clipbuf://window-shown",
+    "captureStatus": "clipbuf://capture-status"
+  }
+}
