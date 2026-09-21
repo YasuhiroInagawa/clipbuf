@@ -70,3 +70,8 @@ CI の 3 ジョブは `.github/workflows/ci.yml`。`#[cfg(target_os = "...")]` �
 - 設計時の調査が古かった例。実装フェーズで依存クレートのソースを読んで判明したため、**design.md / research.md / tasks.md / steering を先に更新してコミットし、それから実装**した（仕様と実装のずれを残さない）
 - 自前 `WaylandAdapter` は不要になり、`clipboard-rs` の `wayland` feature 有効化と `capability_for`（純粋関数）の追加だけで完了。Linux 固有のバックエンド判定は `cfg(target_os = "linux")` の 1 関数に閉じた
 - Linux ターゲット限定の依存（`wl-clipboard-rs`）は macOS / Windows のビルドに影響しない。CI 3 OS で確認
+
+### 3.4 アダプタ選択・macOS 許可・プラットフォーム情報
+- `cfg(target_os)` で分岐するコードは、**Mac でクリーンでも他 OS では `unused mut` / 未使用 import で clippy が落ちる**ことがある。対策：(a) cfg 分岐は関数ごと切り替える（`#[cfg] fn f(mut x)` / `#[cfg(not)] fn f(x)`）、(b) 各 OS 用のテストを用意して import を全 OS で使う
+- CI の 3 OS それぞれで `select_adapter` の実環境テストが走る：macOS = Full、Windows = Full（ランナーに実クリップボードあり）、Linux = Unavailable（ヘッドレス）。これで「ディスプレイなしでも落ちない」経路が毎回検証される
+- macOS の `accessBehavior`（15.4+）は `respondsToSelector` でガードし、古い macOS でのクラッシュを防ぐ。`objc2-app-kit` は `[target.'cfg(target_os = "macos")'.dependencies]` に置き、`NSPasteboard` feature だけ有効化
