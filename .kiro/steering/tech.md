@@ -22,7 +22,7 @@ OS clipboard ──(監視)──> Rust core ──(event: 新項目)──> Web
 - **Core**: Rust（stable、edition 2024）+ Tauri 2
 - **Frontend**: TypeScript + Svelte 5 + Vite（小さな常駐 UI に対して最小のボイラープレートとバンドルサイズ）
 - **Package manager**: npm（Node 26 以上）
-- **Settings persistence**: `tauri-plugin-store`（JSON、アプリのデータディレクトリ）
+- **Settings persistence**: アプリのデータディレクトリの `settings.json`（`serde_json`、原子的書き込み。Rust からのみアクセス）
 
 ## Key Libraries
 

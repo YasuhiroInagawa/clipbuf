@@ -131,6 +131,13 @@
 - **Trade-offs**: Wayland での変化検知がイベントでなくポーリングになる（既定 200ms）。GNOME 非対応は変わらない
 - **Follow-up**: Linux CI で `wayland` feature 込みのビルドが通ること。KDE / wlroots 系 VM での実動作は節目の手動確認で
 
+### Decision: 設定の永続化は素の JSON ファイル（実装時に更新）
+- **Context**: 設計では `tauri-plugin-store` としていたが、設定は Rust 側からしか読み書きしない
+- **Alternatives Considered**: 1. `tauri-plugin-store`（JS 側 API 付き、最新公開版 3.0.0-alpha） 2. `serde_json` + 一時ファイル → rename
+- **Selected Approach**: 2。`SettingsStore::open(path)` を tempdir で単体テストし、`load(&AppHandle)` はパス解決だけを行う
+- **Rationale**: 依存とプラグイン登録が減り、テストが Tauri 実行環境なしで完結する
+- **Trade-offs**: 将来 JS 側から設定を直接読みたくなった場合は command 経由にする（現設計どおり）
+
 ## Risks & Mitigations
 - `clipboard-rs` の Windows 実装で登録形式名が取れない → 実装初期に検証。取れなければ `windows-sys` で `EnumClipboardFormats` + `GetClipboardFormatNameW` を直接呼ぶ小さな補助関数を Windows アダプタに追加
 - macOS 26 で読み取りのたびにダイアログが出る（「確認」設定） → 起動時に `accessBehavior` を確認し、`ask` の場合も案内を出す。README に「常に許可」の手順

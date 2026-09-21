@@ -46,7 +46,7 @@
 - コード署名証明書・Apple Developer アカウントの管理（CI の secrets として与えられる前提）
 
 ### Allowed Dependencies
-- Tauri 2 本体と公式プラグイン: global-shortcut, autostart, updater, store, single-instance, window-state
+- Tauri 2 本体と公式プラグイン: global-shortcut, autostart, updater, single-instance, window-state
 - クリップボード: `clipboard-rs`（Windows / macOS / Linux X11・Wayland。Wayland は `wayland` feature で `wl-clipboard-rs` の data-control を使用）
 - macOS の許可状態確認: `objc2-app-kit`（`NSPasteboard.accessBehavior` のみ）
 - 文字処理: `encoding_rs`（Shift_JIS 判定）、`unicode-normalization`（NFC/NFD 判定）
@@ -125,7 +125,7 @@ graph TB
 | Core | Rust stable（edition 2024）+ Tauri 2.x | 監視、判定、変換、保持、設定、トレイ、ホットキー | |
 | Clipboard | `clipboard-rs` 0.3.5（`default-features = false`, `features = ["wayland"]`） | 監視と多形式読み書き。Linux は `WAYLAND_DISPLAY` で Wayland / X11 をクレート内で実行時選択 | Wayland も macOS と同様にポーリング監視 |
 | Text | `encoding_rs`、`unicode-normalization` | 機種依存文字・正規化混在の判定 | |
-| Settings | `tauri-plugin-store` | `settings.json` の永続化 | 項目内容は保存しない |
+| Settings | 素の JSON ファイル（`serde_json` + 一時ファイル → rename） | アプリデータディレクトリの `settings.json` | 項目内容は保存しない。Rust からのみアクセスするためプラグイン不要 |
 | Window / Tray | Tauri 本体、`tauri-plugin-window-state` | 最前面、トレイ、位置・サイズ復元 | |
 | Hotkey / Autostart | `tauri-plugin-global-shortcut`、`tauri-plugin-autostart` | 表示切替、ログイン時起動 | |
 | Single instance | `tauri-plugin-single-instance` | 二重起動時は既存ウィンドウを表示 | |
@@ -408,7 +408,7 @@ flowchart TD
 | transform | Core / pure | 転送時テキスト変換 | 7.4–7.12 | — | Service |
 | Buffer | Core / pure | FIFO 保持 | 1.6, 2.1–2.5, 6.9, 10.1 | model (P0) | Service, State |
 | ClipboardPort + Adapters | Core / OS | 監視・読み書き | 1.1–1.5, 1.8, 11.3–11.6 | clipboard-rs (P0) | Service, Event |
-| SettingsStore | Core / persistence | 設定の永続化と差分適用 | 2.5, 7.3, 9.1–9.3, 12.4 | tauri-plugin-store (P0) | Service, State |
+| SettingsStore | Core / persistence | 設定の永続化と差分適用 | 2.5, 7.3, 9.1–9.3, 12.4 | serde_json, std::fs (P0) | Service, State |
 | CaptureService | App / runtime | 取り込み経路 | 1.1–1.8 | ClipboardPort, analysis, Buffer (P0) | Event |
 | commands | App / IPC | frontend からの操作入口 | 2.3, 2.4, 6.x, 7.x, 9.x | Buffer, transform, ClipboardPort, SettingsStore (P0) | API |
 | window / tray / hotkey / platform | App / runtime | 常駐と表示制御 | 8.x, 9.4, 9.5, 11.5, 11.6 | Tauri plugins (P0) | Event |
@@ -663,16 +663,17 @@ pub fn select_adapter(settings: &Settings) -> Box<dyn ClipboardPort>;   // OS �
 **Contracts**: Service [x] / State [x]
 
 ```rust
-pub struct SettingsStore { /* tauri_plugin_store::Store, RwLock<Settings> */ }
+pub struct SettingsStore { /* PathBuf, RwLock<Settings> */ }
 impl SettingsStore {
-    pub fn load(app: &AppHandle) -> Result<Self, AppError>;   // 無ければ既定値で作成。不正値は既定値に置換
+    pub fn open(path: PathBuf) -> Result<Self, AppError>;      // 無ければ既定値で作成。不正値は既定値に置換
+    pub fn load(app: &AppHandle) -> Result<Self, AppError>;   // app_data_dir()/settings.json で open
     pub fn get(&self) -> Settings;
     pub fn update(&self, next: Settings) -> Result<SettingsDiff, AppError>;  // 検証 → 保存 → 差分
 }
 pub struct SettingsDiff { pub capacity: bool, pub hotkey: bool, pub autostart: bool, pub language: bool, pub transfer: bool, pub poll_interval: bool }
 ```
 
-- 保存先: `tauri-plugin-store` の `settings.json`（アプリデータディレクトリ）。項目内容は含まない
+- 保存先: アプリデータディレクトリの `settings.json`。一時ファイルに書いて rename する原子的書き込み。項目内容は含まない。純粋関数 `validate` / `sanitize` / `diff` を分離して単体テストする
 - `update` は範囲検証に失敗すると `InvalidSettings` を返し、保存しない
 - `SettingsDiff` を受けて `app` 層が hotkey 再登録、`Buffer.set_capacity`、autostart 切替、`settings-changed` event 送出を行う
 
@@ -827,7 +828,7 @@ export function tokenize(text: string): { tokens: PreviewToken[]; truncated: boo
 - ドメインイベント: `ItemAdded`, `ItemsChanged`（IPC event に対応）
 
 ### Logical Data Model
-- `settings.json`（tauri-plugin-store）: `Settings` を 1 オブジェクトとして保存。キーは camelCase。未知キーは無視、欠損キーは既定値。スキーマバージョン `version: 1` を併記し、将来の移行判定に使う
+- `settings.json`: `Settings` を 1 オブジェクトとして保存。キーは camelCase。未知キーは無視、欠損キーは既定値。スキーマバージョン `version: 1` を併記し、将来の移行判定に使う
 - ウィンドウ位置・サイズは `tauri-plugin-window-state` が別ファイルに保存する（設計対象外）
 
 ### Data Contracts & Integration
