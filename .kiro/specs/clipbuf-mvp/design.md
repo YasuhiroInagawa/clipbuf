@@ -176,7 +176,8 @@ clipbuf/
 │           ├── mod.rs                  # bootstrap(): 状態生成、アダプタ選択、監視開始、tray/hotkey 登録
 │           ├── state.rs                # AppState（Mutex<Buffer>, SettingsStore, Box<dyn ClipboardPort>, LastWrite）
 │           ├── capture.rs              # CaptureService: 監視イベント → フィルタ → analyze → buffer → emit
-│           ├── commands.rs             # #[tauri::command] 群（薄い委譲）
+│           ├── ops.rs                  # コマンドのロジック（Tauri 非依存、フェイクでテスト）
+│           ├── commands.rs             # #[tauri::command] 群（ops への薄い委譲。関数名 = コマンド名）
 │           ├── events.rs               # イベント名定数と payload 型
 │           ├── tray.rs                 # トレイメニュー
 │           ├── window.rs               # 表示切替、close→hide、settings ウィンドウ生成、activation policy

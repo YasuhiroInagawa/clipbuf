@@ -85,3 +85,8 @@ CI の 3 ジョブは `.github/workflows/ci.yml`。`#[cfg(target_os = "...")]` �
 - Tauri の `emit` を `CaptureSink` トレイトで切り離し、サービス本体は Tauri に依存しない。テストは記録用シンク + `FakeClipboard` で、スレッドを使う統合テストも `mpsc` の `recv_timeout` で決定的に書ける
 - ログには項目内容を絶対に出さない。除外理由も `Debug` ではなく静的文字列で出す（`Decision::reason()`）。レビューで見つけた構造的リスクをその場で潰した例
 - デバウンスは「静かになるまで待つ」方式に上限（500ms）を付け、連続書き込みでも 1 秒以内の要件を保つ
+
+### 4.3 コマンドとイベント
+- Tauri の `#[tauri::command]` は**関数名がそのままフロントのコマンド名**になるため、ロジック関数と同名にできない。ロジックを `app/ops.rs`（Tauri 非依存・テスト対象）に置き、`app/commands.rs` は同名の薄いラッパーだけにした
+- フロントへのイベント送出は `EventSink` トレイト経由。テストでは記録用シンク、本番は `TauriSink(AppHandle)`。これでコマンドのロジックも `FakeClipboard` だけで統合テストできる
+- `bootstrap` を実装したことで `npm run tauri dev` の起動時に設定ファイルが生成され、取り込みスレッドが走る状態になった。UI がまだ無いので、起動と設定ファイル生成をスモークテストとした
