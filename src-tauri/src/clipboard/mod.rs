@@ -77,15 +77,27 @@ pub trait ClipboardPort: Send + Sync {
 pub fn select_adapter(settings: &Settings) -> Box<dyn ClipboardPort> {
     let poll = Duration::from_millis(u64::from(settings.poll_interval_ms));
     match clipboard_rs::ClipboardRsAdapter::new(poll) {
-        Ok(mut adapter) => {
-            #[cfg(target_os = "macos")]
-            if macos_access::is_denied() {
-                adapter.override_capability(CaptureCapability::Denied);
-            }
-            Box::new(adapter)
-        }
+        Ok(adapter) => Box::new(apply_platform_overrides(adapter)),
         Err(_) => Box::new(unavailable::UnavailableClipboard),
     }
+}
+
+/// macOS: report `Denied` when the user blocked pasteboard access for this app (11.6).
+#[cfg(target_os = "macos")]
+fn apply_platform_overrides(
+    mut adapter: clipboard_rs::ClipboardRsAdapter,
+) -> clipboard_rs::ClipboardRsAdapter {
+    if macos_access::is_denied() {
+        adapter.override_capability(CaptureCapability::Denied);
+    }
+    adapter
+}
+
+#[cfg(not(target_os = "macos"))]
+fn apply_platform_overrides(
+    adapter: clipboard_rs::ClipboardRsAdapter,
+) -> clipboard_rs::ClipboardRsAdapter {
+    adapter
 }
 
 #[cfg(test)]

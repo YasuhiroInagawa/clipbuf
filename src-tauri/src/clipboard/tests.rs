@@ -366,6 +366,14 @@ mod selection {
         assert_eq!(port.capability(), CaptureCapability::Full);
     }
 
+    /// Windows always has a clipboard, including on CI runners.
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn select_adapter_on_windows_yields_full_capability() {
+        let port = select_adapter(&Settings::default());
+        assert_eq!(port.capability(), CaptureCapability::Full);
+    }
+
     /// Headless Linux (CI) has neither DISPLAY nor WAYLAND_DISPLAY: selection must degrade
     /// to the unavailable adapter instead of panicking.
     #[cfg(target_os = "linux")]
