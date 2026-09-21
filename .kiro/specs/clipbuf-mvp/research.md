@@ -121,6 +121,16 @@
 - **Selected Approach**: JSON リソースを読み込む `t(key)` ストア（数十行）。依存を増やさない
 - **Follow-up**: 言語が 3 つ以上に増えたら `svelte-i18n` への移行を検討
 
+### Decision: Wayland は `clipboard-rs` の `wayland` feature で扱い、自前アダプタは書かない（実装時に更新）
+- **Context**: 3.2 の実装時に `clipboard-rs` 0.3.5 のソースを確認したところ、`wayland` feature で `wl-clipboard-rs`（ext-data-control / wlr-data-control）による読み書きと、`WAYLAND_DISPLAY` による実行時のバックエンド選択（失敗時 X11 フォールバック）が既に実装されていた。設計時の調査「X11 のみ」は古かった
+- **Alternatives Considered**:
+  1. 設計どおり `wl-clipboard-watch` で自前 `WaylandAdapter`（イベント駆動）
+  2. `clipboard-rs` の `wayland` feature を有効化（ポーリング監視）
+- **Selected Approach**: 2。`ClipboardRsAdapter` が Linux の両バックエンドを扱い、`capability()` はクレートが選んだバックエンドで決める
+- **Rationale**: 自前コードと依存（`wl-clipboard-watch`）が不要になり、Linux の分岐がクレート内に閉じる。ポーリングは macOS と同じ扱いで要件 1.8（1 秒以内）を満たす
+- **Trade-offs**: Wayland での変化検知がイベントでなくポーリングになる（既定 200ms）。GNOME 非対応は変わらない
+- **Follow-up**: Linux CI で `wayland` feature 込みのビルドが通ること。KDE / wlroots 系 VM での実動作は節目の手動確認で
+
 ## Risks & Mitigations
 - `clipboard-rs` の Windows 実装で登録形式名が取れない → 実装初期に検証。取れなければ `windows-sys` で `EnumClipboardFormats` + `GetClipboardFormatNameW` を直接呼ぶ小さな補助関数を Windows アダプタに追加
 - macOS 26 で読み取りのたびにダイアログが出る（「確認」設定） → 起動時に `accessBehavior` を確認し、`ask` の場合も案内を出す。README に「常に許可」の手順

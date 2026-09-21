@@ -78,12 +78,13 @@
   - Windows / Linux(X11) のコードが CI でビルドされる
   - _Requirements: 1.1, 1.2, 1.8, 11.3_
 
-- [ ] 3.3 (P) Wayland アダプタを実装する（Linux のみ）
-  - data-control プロトコルで selection イベントを受け、テキスト・HTML・RTF・秘匿マーク・自己マーカーの MIME を読む
-  - 書き込み時にテキスト・HTML/RTF・自己マーカーの MIME を同時に提供する
-  - Linux 以外ではコンパイル対象にならず、CI の Linux ジョブでビルドとテストが通る
+- [ ] 3.3 (P) Wayland 対応を有効化する（Linux のみ）
+  - `clipboard-rs` の `wayland` feature を有効にし、Linux では `WAYLAND_DISPLAY` の有無でクレートが Wayland（data-control）/ X11 を実行時に選ぶ構成にする
+  - 取り込み能力の判定を、クレートが選んだバックエンドに基づいて確定する（Wayland → 完全、X11 かつ Wayland セッション → XWayland 限定、X11 のみ → 完全）
+  - 書き込み時のマーカー・秘匿マークは MIME 名（`application/x-clipbuf-marker` 等）で扱われ、`available_formats` に現れる
+  - Linux 以外のビルドに影響せず、CI の Linux ジョブで `wayland` feature 込みのビルドとテストが通る
   - _Requirements: 11.4_
-  - _Boundary: WaylandAdapter_
+  - _Boundary: ClipboardRsAdapter_
 
 - [ ] 3.4 アダプタ選択とプラットフォーム情報を実装する
   - Linux では「data-control 利用可 → Wayland」「X11 利用可 → clipboard-rs（XWayland 時は取り込み限定と報告）」「どちらも不可 → 取り込み不可」の順で選択する

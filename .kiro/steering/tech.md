@@ -33,9 +33,10 @@ Tauri 公式プラグインを優先し、3 OS 対応を自前で書かない：
 - `tauri-plugin-single-instance` — 二重起動防止
 - Tauri 本体の tray / always-on-top / window state
 
-**クリップボードは公式プラグインを使わず自前実装**する。理由：変化監視、HTML/RTF の生データ取得、
-秘匿マーク（ConcealedType 等）の検出、自己書き込みの除外が公式プラグインの範囲外のため。
-OS 別に実装し、共通トレイトで抽象化する（詳細は structure.md）。
+**クリップボードは公式プラグインを使わず `clipboard-rs`（`default-features = false`, `wayland` feature）を使う**。
+理由：変化監視、HTML/RTF の生データ取得、任意形式（秘匿マーク・自己マーカー）の読み書きが公式プラグインの範囲外で、
+`clipboard-rs` はこれらを 3 OS（Linux は X11 / Wayland）で提供するため。共通トレイト `ClipboardPort` の裏に置き、
+テストにはフェイクを使う（詳細は structure.md）。
 
 ## Development Standards
 
@@ -86,7 +87,7 @@ npm test                   # Vitest
 
 - **Tauri 2 を採用**: 不可視文字の可視化は HTML/CSS が最も表現しやすい。バイナリが小さい。3 OS のビルド・macOS 公証・インストーラ生成が公式 CI ワークフローに揃う。依存が MIT/Apache-2.0 で再配布に障壁がない
 - **判定・変換は Rust 側**: OS 間で結果を揃え、テストを 1 か所に集める
-- **クリップボードは自前実装**: 上記「Key Libraries」参照。監視方式は Windows = クリップボードリスナー、macOS = changeCount のポーリング、Linux = X11 XFixes（Wayland は wlr-data-control 対応環境のみ）
+- **クリップボードは `clipboard-rs`（`wayland` feature 有効）**: 公式 Tauri プラグインは変化監視・RTF・任意形式に対応しないため。監視方式は Windows = クリップボードリスナー、macOS = changeCount のポーリング、Linux = X11 XFixes または Wayland data-control のポーリング（`WAYLAND_DISPLAY` で実行時選択。GNOME は data-control 非対応のため XWayland 経由の限定動作）
 - **配布**: GitHub Releases + `tauri-action`。macOS は Developer ID 署名 + 公証、Windows は未署名（SmartScreen 警告は README で案内、費用をかけない）、Linux は AppImage / .deb / .rpm。Windows インストーラは NSIS を既定とし、MSI は winget 対応時に追加
 - **更新は承諾制**: 起動時に確認・通知し、ユーザーが承諾したときだけ適用する
 - **ライセンス**: アプリは MIT。依存の THIRD-PARTY 一覧を `cargo-about` 等でビルド時に生成し同梱する

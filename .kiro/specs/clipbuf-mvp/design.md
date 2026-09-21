@@ -47,7 +47,7 @@
 
 ### Allowed Dependencies
 - Tauri 2 本体と公式プラグイン: global-shortcut, autostart, updater, store, single-instance, window-state
-- クリップボード: `clipboard-rs`（Windows / macOS / X11）、`wl-clipboard-rs` + `wl-clipboard-watch`（Wayland）
+- クリップボード: `clipboard-rs`（Windows / macOS / Linux X11・Wayland。Wayland は `wayland` feature で `wl-clipboard-rs` の data-control を使用）
 - macOS の許可状態確認: `objc2-app-kit`（`NSPasteboard.accessBehavior` のみ）
 - 文字処理: `encoding_rs`（Shift_JIS 判定）、`unicode-normalization`（NFC/NFD 判定）
 - Frontend: Svelte 5, Vite, TypeScript, Vitest
@@ -76,7 +76,6 @@ graph TB
     subgraph RustCore
         Port[ClipboardPort trait]
         AdapterRs[ClipboardRsAdapter]
-        AdapterWl[WaylandAdapter]
         Capture[CaptureService]
         Analysis[analysis]
         Transform[transform]
@@ -92,9 +91,7 @@ graph TB
         UI[components MainWindow SettingsWindow]
     end
     Clip --> AdapterRs
-    Clip --> AdapterWl
     AdapterRs --> Port
-    AdapterWl --> Port
     Port --> Capture
     Capture --> Analysis
     Capture --> Buffer
@@ -126,7 +123,7 @@ graph TB
 | Frontend | Svelte 5 + Vite 7 + TypeScript 5（strict） | リスト・プレビュー・トグル・設定 UI、i18n | 判定ロジックを持たない |
 | Frontend test | Vitest | `preview/tokenize` とストアの単体テスト | |
 | Core | Rust stable（edition 2024）+ Tauri 2.x | 監視、判定、変換、保持、設定、トレイ、ホットキー | |
-| Clipboard | `clipboard-rs` 0.3.x、`wl-clipboard-rs` 0.9.x + `wl-clipboard-watch` | 監視と多形式読み書き | Linux は起動時にアダプタ選択 |
+| Clipboard | `clipboard-rs` 0.3.5（`default-features = false`, `features = ["wayland"]`） | 監視と多形式読み書き。Linux は `WAYLAND_DISPLAY` で Wayland / X11 をクレート内で実行時選択 | Wayland も macOS と同様にポーリング監視 |
 | Text | `encoding_rs`、`unicode-normalization` | 機種依存文字・正規化混在の判定 | |
 | Settings | `tauri-plugin-store` | `settings.json` の永続化 | 項目内容は保存しない |
 | Window / Tray | Tauri 本体、`tauri-plugin-window-state` | 最前面、トレイ、位置・サイズ復元 | |
@@ -171,7 +168,6 @@ clipbuf/
 │       │   ├── marker.rs               # 自己書き込みマーカー形式名と内容ハッシュ
 │       │   ├── conceal.rs              # 秘匿マーク形式名の一覧と判定
 │       │   ├── clipboard_rs.rs         # ClipboardRsAdapter（Windows / macOS / X11）
-│       │   ├── wayland.rs              # WaylandAdapter（cfg(target_os = "linux")）
 │       │   ├── macos_access.rs         # accessBehavior 確認（cfg(target_os = "macos")）
 │       │   └── fake.rs                 # テスト用 FakeClipboard（cfg(test)）
 │       ├── settings/
@@ -296,7 +292,7 @@ sequenceDiagram
 ```mermaid
 flowchart TD
     Start[startup on Linux] --> W{WAYLAND_DISPLAY set and data-control available}
-    W -- yes --> WL[WaylandAdapter capture full]
+    W -- yes --> WL[ClipboardRsAdapter Wayland backend capture full]
     W -- no --> X{DISPLAY set}
     X -- yes --> X11[ClipboardRsAdapter via X11 or XWayland]
     X11 --> WLENV{WAYLAND_DISPLAY set}
@@ -385,7 +381,7 @@ flowchart TD
 | 11.1 | 3 OS で動作 | CI matrix, アダプタ | — | — |
 | 11.2 | 同一機能 | 純粋ロジックの共通化 | — | — |
 | 11.3 | X11 / XWayland で取り込み | ClipboardRsAdapter | — | アダプタ選択 |
-| 11.4 | data-control 対応 Wayland で取り込み | WaylandAdapter | — | アダプタ選択 |
+| 11.4 | data-control 対応 Wayland で取り込み | ClipboardRsAdapter（Wayland backend） | — | アダプタ選択 |
 | 11.5 | 取り込み不可の通知 | platform, Notice | PlatformInfo.capture | アダプタ選択 |
 | 11.6 | macOS 拒否時の案内 | macos_access, Notice | PlatformInfo.capture = Denied | — |
 | 12.1 | 日英 UI | locales, i18n store | — | — |
@@ -411,7 +407,7 @@ flowchart TD
 | analysis | Core / pure | 警告判定 | 5.1–5.7 | encoding_rs, unicode-normalization (P0) | Service |
 | transform | Core / pure | 転送時テキスト変換 | 7.4–7.12 | — | Service |
 | Buffer | Core / pure | FIFO 保持 | 1.6, 2.1–2.5, 6.9, 10.1 | model (P0) | Service, State |
-| ClipboardPort + Adapters | Core / OS | 監視・読み書き | 1.1–1.5, 1.8, 11.3–11.6 | clipboard-rs, wl-clipboard-* (P0) | Service, Event |
+| ClipboardPort + Adapters | Core / OS | 監視・読み書き | 1.1–1.5, 1.8, 11.3–11.6 | clipboard-rs (P0) | Service, Event |
 | SettingsStore | Core / persistence | 設定の永続化と差分適用 | 2.5, 7.3, 9.1–9.3, 12.4 | tauri-plugin-store (P0) | Service, State |
 | CaptureService | App / runtime | 取り込み経路 | 1.1–1.8 | ClipboardPort, analysis, Buffer (P0) | Event |
 | commands | App / IPC | frontend からの操作入口 | 2.3, 2.4, 6.x, 7.x, 9.x | Buffer, transform, ClipboardPort, SettingsStore (P0) | API |
@@ -612,8 +608,7 @@ impl Buffer {
 | Requirements | 1.1–1.5, 1.8, 11.3–11.6 |
 
 **Dependencies**
-- External: `clipboard-rs`（Windows / macOS / X11）— 監視と多形式読み書き（P0）
-- External: `wl-clipboard-rs`, `wl-clipboard-watch`（Linux Wayland）— data-control 監視と読み書き（P0）
+- External: `clipboard-rs`（Windows / macOS / Linux X11・Wayland）— 監視と多形式読み書き。Wayland は同クレートの `wayland` feature（`wl-clipboard-rs` の data-control）（P0）
 - External: `objc2-app-kit`（macOS）— `accessBehavior` 確認のみ（P1）
 
 **Contracts**: Service [x] / Event [x]
@@ -645,7 +640,7 @@ pub fn select_adapter(settings: &Settings) -> Box<dyn ClipboardPort>;   // OS �
 ```
 
 - `ClipboardRsAdapter`: Windows はリスナー、macOS は `changeCount` を `poll_interval_ms` でポーリング（読み取りは変化時のみ）、X11 は XFixes（いずれも clipboard-rs の `ClipboardWatcher` を利用）。`read` は `available_formats` を先に取得し、秘匿形式（`conceal.rs` の一覧）とマーカー形式の有無を `ClipboardSnapshot` に反映する
-- `WaylandAdapter`: `wl-clipboard-watch` の selection イベントで `Changed`。読み書きは `wl-clipboard-rs`。MIME: `text/plain;charset=utf-8`, `text/html`, `text/rtf`, マーカーは `application/x-clipbuf-marker`
+- Linux の Wayland: 別アダプタは置かず、`ClipboardRsAdapter` が `clipboard-rs` の `wayland` feature を通じて扱う。クレートが `WAYLAND_DISPLAY` の有無で data-control（ext / wlr）と X11 を実行時に選び、data-control 初期化に失敗すると X11 にフォールバックする。監視はポーリング（`poll_interval_ms`）。`capability()` は選ばれたバックエンドで決める：Wayland → `Full`、X11 かつ `WAYLAND_DISPLAY` あり → `LimitedXWayland`、X11 のみ → `Full`
 - マーカー形式名（`marker.rs`）: macOS `org.clipbuf.marker`、Windows 登録形式 `clipbuf-marker`、X11 / Wayland `application/x-clipbuf-marker`
 - 秘匿形式名（`conceal.rs`）: `org.nspasteboard.ConcealedType`、`ExcludeClipboardContentFromMonitorProcessing`、`x-kde-passwordManagerHint`
 - `macos_access.rs`: 起動時に `NSPasteboard.general.accessBehavior` を確認し `deny` なら `Denied`、`ask` は `Full` のまま（案内は README）
