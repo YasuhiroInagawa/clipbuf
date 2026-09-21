@@ -1,11 +1,13 @@
 //! Logic behind the frontend commands, testable without Tauri (see `commands.rs` for the
 //! `#[tauri::command]` wrappers).
 
+use super::autostart::AutostartControl;
 use super::events::EventSink;
+use super::hotkey::{HotkeyState, Registrar};
 use super::state::AppState;
 use crate::clipboard::WritePayload;
 use crate::model::{AppError, ErrorKind, ItemDto, ItemId, Settings, TransferMode, TransferOutcome};
-use crate::settings::SettingsDiff;
+use crate::settings;
 use crate::transform;
 
 /// Items newest first (2.1).
@@ -91,12 +93,50 @@ pub fn get_settings(state: &AppState) -> Settings {
     state.settings.get()
 }
 
-/// Validate and persist `next`. Applying the diff (hotkey, autostart, capacity) and
-/// announcing the change is the runtime's job (task 4.5).
-pub fn update_settings(
+/// Full settings update (9.3, 9.4, 2.5): validate → register a changed hotkey *before*
+/// saving (so a rejected hotkey leaves everything untouched) → persist → apply the diff to
+/// the buffer and autostart → announce.
+pub fn apply_settings(
     state: &AppState,
+    hotkeys: &HotkeyState,
+    registrar: &dyn Registrar,
+    autostart: &dyn AutostartControl,
+    sink: &dyn EventSink,
     next: Settings,
-) -> Result<(Settings, SettingsDiff), AppError> {
-    let diff = state.settings.update(next)?;
-    Ok((state.settings.get(), diff))
+) -> Result<Settings, AppError> {
+    settings::validate(&next)?;
+    let current = state.settings.get();
+    let diff = settings::diff(&current, &next);
+    if !diff.any() {
+        return Ok(current);
+    }
+    if diff.hotkey {
+        hotkeys.apply(registrar, &next.hotkey)?;
+    }
+    if let Err(e) = state.settings.update(next) {
+        // Persisting failed after the hotkey moved: put the old one back so state and disk agree.
+        if diff.hotkey {
+            let _ = hotkeys.apply(registrar, &current.hotkey);
+        }
+        return Err(e);
+    }
+    let applied = state.settings.get();
+
+    if diff.capacity {
+        let announce = {
+            let mut buffer = state.buffer.lock().expect("buffer lock");
+            let before = buffer.len();
+            buffer.set_capacity(applied.capacity);
+            buffer.len() != before
+        };
+        if announce {
+            sink.items_changed(list_items(state));
+        }
+    }
+    if diff.autostart {
+        // Failure is logged by the control; the preference itself is still saved.
+        let _ = autostart.set_enabled(applied.autostart);
+    }
+    sink.settings_changed(applied.clone());
+    Ok(applied)
 }

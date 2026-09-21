@@ -1,5 +1,6 @@
 //! Tauri runtime wiring: state, capture service, commands, events, tray, window, hotkey.
 
+pub mod autostart;
 pub mod capture;
 pub mod commands;
 pub mod events;
@@ -10,6 +11,8 @@ pub mod state;
 pub mod tray;
 pub mod window;
 
+#[cfg(test)]
+mod apply_test;
 #[cfg(test)]
 mod capture_test;
 #[cfg(test)]
@@ -37,9 +40,23 @@ use state::AppState;
 /// Coalescing window for bursts of clipboard changes (design §CaptureService).
 const CAPTURE_DEBOUNCE: Duration = Duration::from_millis(100);
 
-/// Build the runtime state, start capturing, wire tray / hotkey / window behaviour and report
-/// the initial capture status. Single-instance, autostart and settings-diff application are
-/// added by task 4.5.
+/// Argument passed by the autostart entry so a login launch stays out of the way (9.5).
+pub const HIDDEN_FLAG: &str = "--hidden";
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RuntimeOpts {
+    pub start_hidden: bool,
+}
+
+/// Parse process arguments (the first one is the executable and is ignored).
+pub fn parse_runtime_opts<'a>(args: impl Iterator<Item = &'a String>) -> RuntimeOpts {
+    RuntimeOpts {
+        start_hidden: args.skip(1).any(|a| a == HIDDEN_FLAG),
+    }
+}
+
+/// Build the runtime state, start capturing, wire tray / hotkey / window behaviour, sync
+/// autostart, show the main window unless started hidden, and report the capture status.
 pub fn bootstrap(app: &AppHandle) -> Result<(), AppError> {
     let settings = SettingsStore::load(app)?;
     let clipboard = select_adapter(&settings.get());
@@ -66,9 +83,16 @@ pub fn bootstrap(app: &AppHandle) -> Result<(), AppError> {
         log::warn!("hotkey: could not register the configured shortcut");
     }
 
+    autostart::sync(app, state.settings.get().autostart);
+
     app.manage(state);
     app.manage(service);
     app.manage(hotkeys);
+
+    let args: Vec<String> = std::env::args().collect();
+    if !parse_runtime_opts(args.iter()).start_hidden {
+        window::show(app);
+    }
     sink.capture_status(status);
     Ok(())
 }

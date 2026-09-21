@@ -42,7 +42,8 @@ pub fn show(app: &AppHandle) {
 }
 
 /// Hide the main window and, if the settings window is open, hide it too (it comes back with
-/// the next `show`).
+/// the next `show`). The window geometry is saved here as well as at exit (8.6), since the
+/// process may be ended without a graceful exit (logout, kill).
 pub fn hide(app: &AppHandle) {
     if let Some(settings) = settings_window(app)
         && settings.is_visible().unwrap_or(false)
@@ -51,7 +52,16 @@ pub fn hide(app: &AppHandle) {
         SETTINGS_HIDDEN_WITH_MAIN.store(true, Ordering::SeqCst);
     }
     if let Some(window) = main_window(app) {
+        save_geometry(app);
         let _ = window.hide();
+    }
+}
+
+/// Persist the main window's position and size now.
+pub fn save_geometry(app: &AppHandle) {
+    use tauri_plugin_window_state::{AppHandleExt, StateFlags};
+    if let Err(e) = app.save_window_state(StateFlags::SIZE | StateFlags::POSITION) {
+        log::warn!("window: could not save window state: {e}");
     }
 }
 

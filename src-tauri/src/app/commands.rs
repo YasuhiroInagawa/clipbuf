@@ -5,7 +5,9 @@ use std::sync::Arc;
 
 use tauri::State;
 
-use super::events::{EventSink, TauriSink};
+use super::autostart::PluginAutostart;
+use super::events::TauriSink;
+use super::hotkey::{HotkeyState, PluginRegistrar};
 use super::ops;
 use super::platform;
 use super::state::AppState;
@@ -48,19 +50,22 @@ pub fn get_settings(state: State<'_, SharedState>) -> Settings {
     ops::get_settings(&state)
 }
 
-/// Validates and persists; applying the diff (hotkey, autostart, capacity) is added by the
-/// runtime wiring (task 4.5).
+/// Validate, register a changed hotkey, persist, apply the diff and announce (9.3, 9.4).
 #[tauri::command]
 pub fn set_settings(
     app: tauri::AppHandle,
     state: State<'_, SharedState>,
+    hotkeys: State<'_, HotkeyState>,
     settings: Settings,
 ) -> Result<Settings, AppError> {
-    let (applied, diff) = ops::update_settings(&state, settings)?;
-    if diff.any() {
-        TauriSink(app).settings_changed(applied.clone());
-    }
-    Ok(applied)
+    ops::apply_settings(
+        &state,
+        &hotkeys,
+        &PluginRegistrar(app.clone()),
+        &PluginAutostart(app.clone()),
+        &TauriSink(app),
+        settings,
+    )
 }
 
 #[tauri::command]

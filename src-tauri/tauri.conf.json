@@ -14,6 +14,7 @@
       {
         "label": "main",
         "title": "clipbuf",
+        "visible": false,
         "width": 480,
         "height": 360,
         "minWidth": 360,

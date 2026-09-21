@@ -1,9 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use super::events::EventSink;
-use super::ops::{
-    clear_items, get_settings, list_items, remove_item, transfer_item, update_settings,
-};
+use super::ops::{clear_items, get_settings, list_items, remove_item, transfer_item};
 use super::state::AppState;
 use crate::buffer::PushResult;
 use crate::clipboard::fake::FakeClipboard;
@@ -301,29 +299,13 @@ fn clear_items_empties_the_buffer_and_announces() {
 // ---- settings ----------------------------------------------------------------------------
 
 #[test]
-fn get_and_update_settings_round_trip_through_the_store() {
+fn get_settings_reflects_the_store() {
     let f = fixture();
     assert_eq!(get_settings(&f.state), Settings::default());
     let next = Settings {
         capacity: 3,
         ..Settings::default()
     };
-    let (applied, diff) = update_settings(&f.state, next.clone()).unwrap();
-    assert_eq!(applied, next);
-    assert!(diff.capacity && !diff.hotkey);
+    f.state.settings.update(next.clone()).unwrap();
     assert_eq!(get_settings(&f.state), next);
-
-    let bad = Settings {
-        tab_width: 0,
-        ..next.clone()
-    };
-    assert_eq!(
-        update_settings(&f.state, bad).unwrap_err().kind,
-        ErrorKind::InvalidSettings
-    );
-    assert_eq!(
-        get_settings(&f.state),
-        next,
-        "rejected update leaves settings untouched"
-    );
 }
