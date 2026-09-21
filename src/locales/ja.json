@@ -55,5 +55,6 @@
   "update.available": "新しいバージョンがあります。",
   "update.install": "更新する",
   "update.dismiss": "あとで",
-  "update.restart": "再起動して更新を完了"
+  "update.restart": "再起動して更新を完了",
+  "transfer.title": "転送オプション"
 }

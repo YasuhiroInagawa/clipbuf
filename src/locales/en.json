@@ -55,5 +55,6 @@
   "update.available": "A new version is available.",
   "update.install": "Update",
   "update.dismiss": "Not now",
-  "update.restart": "Restart to finish updating"
+  "update.restart": "Restart to finish updating",
+  "transfer.title": "Transfer options"
 }
