@@ -6,6 +6,7 @@
 
 use std::sync::mpsc::Sender;
 
+pub mod clipboard_rs;
 pub mod conceal;
 pub mod marker;
 

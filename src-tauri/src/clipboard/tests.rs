@@ -176,3 +176,136 @@ fn port_is_object_safe_and_thread_safe() {
     let boxed: Box<dyn ClipboardPort> = Box::new(FakeClipboard::new(CaptureCapability::Full));
     assert_eq!(boxed.capability(), CaptureCapability::Full);
 }
+
+mod clipboard_rs_adapter {
+    use super::super::clipboard_rs::{ClipboardRsAdapter, build_snapshot};
+    use crate::model::ClipboardSnapshot;
+
+    fn s(v: &[&str]) -> Vec<String> {
+        v.iter().map(|x| x.to_string()).collect()
+    }
+
+    #[test]
+    fn snapshot_carries_text_html_rtf_when_present() {
+        let snap = build_snapshot(
+            &s(&["public.utf8-plain-text", "public.html", "public.rtf"]),
+            || Some("t".into()),
+            || Some("<b>t</b>".into()),
+            || Some("{\\rtf1 t}".into()),
+        );
+        assert_eq!(
+            snap,
+            ClipboardSnapshot {
+                text: Some("t".into()),
+                html: Some("<b>t</b>".into()),
+                rtf: Some("{\\rtf1 t}".into()),
+                concealed: false,
+                own_marker: false,
+            }
+        );
+    }
+
+    #[test]
+    fn snapshot_without_text_does_not_read_style_data() {
+        let snap = build_snapshot(
+            &s(&["public.png"]),
+            || None,
+            || panic!("html must not be read when there is no text"),
+            || panic!("rtf must not be read when there is no text"),
+        );
+        assert_eq!(snap, ClipboardSnapshot::default());
+    }
+
+    #[test]
+    fn concealed_content_is_flagged_and_never_read() {
+        let snap = build_snapshot(
+            &s(&["public.utf8-plain-text", "org.nspasteboard.ConcealedType"]),
+            || panic!("concealed text must not be read"),
+            || panic!(),
+            || panic!(),
+        );
+        assert!(snap.concealed);
+        assert_eq!(snap.text, None);
+    }
+
+    #[test]
+    fn own_marker_is_flagged_and_content_not_read() {
+        let snap = build_snapshot(
+            &s(&["CF_UNICODETEXT", "clipbuf-marker"]),
+            || panic!("our own write must not be read back"),
+            || panic!(),
+            || panic!(),
+        );
+        assert!(snap.own_marker);
+        assert!(!snap.concealed);
+        assert_eq!(snap.text, None);
+    }
+
+    #[test]
+    fn adapter_is_a_clipboard_port() {
+        fn assert_port<T: super::super::ClipboardPort>() {}
+        assert_port::<ClipboardRsAdapter>();
+    }
+
+    /// Touches the real pasteboard; run manually on macOS with `cargo test -- --ignored`.
+    #[cfg(target_os = "macos")]
+    #[test]
+    #[ignore = "uses the real macOS pasteboard and pbcopy"]
+    fn real_pasteboard_round_trip() {
+        use super::super::{ClipboardEvent, ClipboardPort, WritePayload};
+        use crate::model::CaptureCapability;
+        use std::io::Write;
+        use std::sync::mpsc;
+        use std::time::{Duration, Instant};
+
+        let adapter = ClipboardRsAdapter::new(Duration::from_millis(200)).expect("adapter");
+        assert_eq!(adapter.capability(), CaptureCapability::Full);
+        let (tx, rx) = mpsc::channel();
+        adapter.start_watch(tx).expect("watch");
+        assert_eq!(
+            adapter.start_watch(mpsc::channel().0),
+            Err(super::super::ClipError::WatchAlreadyStarted)
+        );
+        std::thread::sleep(Duration::from_millis(300));
+
+        // Our own write: marker must be visible in the following snapshot.
+        adapter
+            .write(WritePayload {
+                text: "clipbuf own",
+                html: Some("<b>clipbuf own</b>"),
+                rtf: None,
+            })
+            .expect("write");
+        assert_eq!(
+            rx.recv_timeout(Duration::from_secs(1)),
+            Ok(ClipboardEvent::Changed)
+        );
+        let snap = adapter.read().expect("read");
+        assert!(snap.own_marker, "own marker after our write: {snap:?}");
+        while rx.try_recv().is_ok() {}
+
+        // Another process copies: event within 1 s, no marker, text readable.
+        let t0 = Instant::now();
+        let mut child = std::process::Command::new("pbcopy")
+            .stdin(std::process::Stdio::piped())
+            .spawn()
+            .expect("pbcopy");
+        child
+            .stdin
+            .take()
+            .unwrap()
+            .write_all(b"from pbcopy")
+            .unwrap();
+        child.wait().unwrap();
+        assert_eq!(
+            rx.recv_timeout(Duration::from_secs(1)),
+            Ok(ClipboardEvent::Changed)
+        );
+        assert!(t0.elapsed() < Duration::from_secs(1));
+        let snap = adapter.read().expect("read");
+        assert_eq!(snap.text.as_deref(), Some("from pbcopy"));
+        assert!(!snap.own_marker);
+        assert!(!snap.concealed);
+        assert_eq!(snap.html, None);
+    }
+}
