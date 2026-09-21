@@ -87,6 +87,13 @@ impl<T: ClipboardPort + ?Sized> ClipboardPort for std::sync::Arc<T> {
     }
 }
 
+/// Lets `AppState::new` accept either a concrete port or an already boxed one.
+impl<T: ClipboardPort + 'static> From<std::sync::Arc<T>> for Box<dyn ClipboardPort> {
+    fn from(port: std::sync::Arc<T>) -> Self {
+        Box::new(port)
+    }
+}
+
 /// Choose the clipboard implementation for this process (11.3–11.6).
 ///
 /// `clipboard-rs` already picks Wayland or X11 on Linux; here we only handle the two things

@@ -2,10 +2,13 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use super::capture::{CaptureService, CaptureSink, READ_FAILURE_THRESHOLD, process_once};
+use super::capture::{CaptureService, READ_FAILURE_THRESHOLD, process_once};
+use super::events::EventSink;
 use super::state::AppState;
 use crate::clipboard::fake::FakeClipboard;
-use crate::model::{CaptureCapability, CaptureStatus, ClipboardSnapshot, ItemDto, Warning};
+use crate::model::{
+    CaptureCapability, CaptureStatus, ClipboardSnapshot, ItemDto, Settings, Warning,
+};
 use crate::settings::SettingsStore;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -16,10 +19,13 @@ enum Sunk {
 
 struct RecordingSink(Mutex<Sender<Sunk>>);
 
-impl CaptureSink for RecordingSink {
+impl EventSink for RecordingSink {
     fn item_added(&self, item: ItemDto) {
         let _ = self.0.lock().unwrap().send(Sunk::Item(item));
     }
+    fn items_changed(&self, _items: Vec<ItemDto>) {}
+    fn settings_changed(&self, _settings: Settings) {}
+    fn window_shown(&self) {}
     fn capture_status(&self, status: CaptureStatus) {
         let _ = self.0.lock().unwrap().send(Sunk::Status(status));
     }

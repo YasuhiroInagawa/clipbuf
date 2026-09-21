@@ -9,18 +9,12 @@ use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
+use super::events::EventSink;
 use super::state::AppState;
 use crate::analysis;
 use crate::buffer::PushResult;
 use crate::clipboard::{ClipError, ClipboardEvent};
-use crate::model::{CaptureStatus, ClipboardSnapshot, ItemDto};
-
-/// Where captured items and status changes go. The Tauri runtime implements this with
-/// `emit`; tests record.
-pub trait CaptureSink: Send + Sync {
-    fn item_added(&self, item: ItemDto);
-    fn capture_status(&self, status: CaptureStatus);
-}
+use crate::model::{CaptureStatus, ClipboardSnapshot};
 
 /// Consecutive read failures after which `CaptureStatus::ReadFailed` is reported once.
 pub const READ_FAILURE_THRESHOLD: u32 = 5;
@@ -79,7 +73,7 @@ pub fn decide(snapshot: ClipboardSnapshot, state: &AppState) -> Decision {
 
 /// Read the clipboard once and, if it passes the exclusion chain, add it to the buffer and
 /// announce it. Read failures are counted; the threshold triggers a single status report.
-pub fn process_once(state: &AppState, sink: &dyn CaptureSink) {
+pub fn process_once(state: &AppState, sink: &dyn EventSink) {
     let snapshot = match state.clipboard.read() {
         Ok(s) => s,
         Err(_) => {
@@ -125,7 +119,7 @@ impl CaptureService {
     /// Changes arriving within `debounce` of each other are coalesced into one read.
     pub fn start(
         state: Arc<AppState>,
-        sink: Arc<dyn CaptureSink>,
+        sink: Arc<dyn EventSink>,
         debounce: Duration,
     ) -> Result<Self, ClipError> {
         let (tx, rx) = mpsc::channel();
@@ -141,7 +135,7 @@ impl CaptureService {
 fn run(
     rx: Receiver<ClipboardEvent>,
     state: Arc<AppState>,
-    sink: Arc<dyn CaptureSink>,
+    sink: Arc<dyn EventSink>,
     debounce: Duration,
 ) {
     while rx.recv().is_ok() {

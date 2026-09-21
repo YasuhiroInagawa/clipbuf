@@ -14,6 +14,20 @@ pub mod transform;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .setup(|app| {
+            app::bootstrap(app.handle())?;
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            app::commands::list_items,
+            app::commands::transfer_item,
+            app::commands::remove_item,
+            app::commands::clear_items,
+            app::commands::get_settings,
+            app::commands::set_settings,
+            app::commands::get_platform_info,
+            app::commands::hide_window,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

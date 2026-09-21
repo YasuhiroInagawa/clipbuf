@@ -19,12 +19,12 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(settings: SettingsStore, clipboard: impl ClipboardPort + 'static) -> Self {
+    pub fn new(settings: SettingsStore, clipboard: impl Into<Box<dyn ClipboardPort>>) -> Self {
         let capacity = settings.get().capacity;
         Self {
             buffer: Mutex::new(Buffer::new(capacity)),
             settings,
-            clipboard: Box::new(clipboard),
+            clipboard: clipboard.into(),
             last_write: LastWrite::default(),
             read_failures: AtomicU32::new(0),
         }
