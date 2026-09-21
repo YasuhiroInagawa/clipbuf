@@ -22,4 +22,4 @@ log = "0.4"
 tauri = { version = "2.11.6", features = [] }
 encoding_rs = "0.8"
 unicode-normalization = "0.1"
-clipboard-rs = { version = "0.3", default-features = false }
+clipboard-rs = { version = "0.3", default-features = false, features = ["wayland"] }

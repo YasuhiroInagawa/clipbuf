@@ -242,6 +242,29 @@ mod clipboard_rs_adapter {
     }
 
     #[test]
+    fn capability_follows_the_selected_backend() {
+        use super::super::clipboard_rs::{Backend, capability_for};
+        use crate::model::CaptureCapability;
+        assert_eq!(
+            capability_for(Backend::Wayland, true),
+            CaptureCapability::Full
+        );
+        assert_eq!(
+            capability_for(Backend::X11, true),
+            CaptureCapability::LimitedXWayland
+        );
+        assert_eq!(capability_for(Backend::X11, false), CaptureCapability::Full);
+        assert_eq!(
+            capability_for(Backend::Native, false),
+            CaptureCapability::Full
+        );
+        assert_eq!(
+            capability_for(Backend::Native, true),
+            CaptureCapability::Full
+        );
+    }
+
+    #[test]
     fn adapter_is_a_clipboard_port() {
         fn assert_port<T: super::super::ClipboardPort>() {}
         assert_port::<ClipboardRsAdapter>();

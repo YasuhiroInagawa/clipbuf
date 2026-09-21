@@ -1,8 +1,13 @@
-//! `ClipboardPort` adapter over the `clipboard-rs` crate (Windows, macOS, Linux/X11).
+//! `ClipboardPort` adapter over the `clipboard-rs` crate (Windows, macOS, Linux X11 and
+//! Wayland).
 //!
-//! Change detection: Windows uses a clipboard listener, macOS polls `changeCount` every
-//! `poll_interval`, X11 uses XFixes — all inside `clipboard-rs`'s watcher, which runs on
-//! its own thread and only forwards `ClipboardEvent::Changed`. Content is read on demand.
+//! Change detection: Windows uses a clipboard listener, macOS and Wayland poll every
+//! `poll_interval` (`changeCount` / data-control offers), X11 uses XFixes — all inside
+//! `clipboard-rs`'s watcher, which runs on its own thread and only forwards
+//! `ClipboardEvent::Changed`. Content is read on demand.
+//!
+//! On Linux the crate picks the backend at runtime: Wayland (`wayland` feature, data-control
+//! protocol) when `WAYLAND_DISPLAY` is set and the compositor supports it, otherwise X11.
 
 use std::sync::Mutex;
 use std::sync::mpsc::Sender;
@@ -31,23 +36,48 @@ impl ClipboardRsAdapter {
     /// `poll_interval` is used where the platform has no change notification (macOS).
     pub fn new(poll_interval: Duration) -> Result<Self, ClipError> {
         let ctx = ClipboardContext::new().map_err(|_| ClipError::Unavailable)?;
+        let capability = capability_for(
+            backend_of(&ctx),
+            std::env::var_os("WAYLAND_DISPLAY").is_some(),
+        );
         Ok(Self {
             ctx: Mutex::new(ctx),
             poll_interval,
             watcher: Mutex::new(None),
-            capability: detect_capability(),
+            capability,
         })
     }
 }
 
-/// What this adapter can observe. On Linux the X11 backend under a Wayland session only sees
-/// what the compositor mirrors into XWayland (11.3). Wayland-native support is decided in
-/// task 3.3; macOS access denial is detected separately (3.4).
-fn detect_capability() -> CaptureCapability {
-    if cfg!(target_os = "linux") && std::env::var_os("WAYLAND_DISPLAY").is_some() {
-        CaptureCapability::LimitedXWayland
-    } else {
-        CaptureCapability::Full
+/// Which clipboard backend `clipboard-rs` selected.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Backend {
+    /// Windows or macOS: the platform's single native clipboard.
+    Native,
+    X11,
+    Wayland,
+}
+
+#[cfg(target_os = "linux")]
+fn backend_of(ctx: &ClipboardContext) -> Backend {
+    match ctx {
+        ClipboardContext::X11(_) => Backend::X11,
+        ClipboardContext::Wayland(_) => Backend::Wayland,
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+fn backend_of(_ctx: &ClipboardContext) -> Backend {
+    Backend::Native
+}
+
+/// What the adapter can observe (11.3, 11.4). The X11 backend inside a Wayland session only
+/// sees what the compositor mirrors into XWayland. macOS access denial is detected
+/// separately (task 3.4).
+pub fn capability_for(backend: Backend, wayland_session: bool) -> CaptureCapability {
+    match backend {
+        Backend::X11 if wayland_session => CaptureCapability::LimitedXWayland,
+        Backend::X11 | Backend::Wayland | Backend::Native => CaptureCapability::Full,
     }
 }
 
