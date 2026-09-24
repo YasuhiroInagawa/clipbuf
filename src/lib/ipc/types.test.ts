@@ -5,6 +5,7 @@ import {
   CAPTURE_STATUSES,
   ERROR_KINDS,
   EVENT,
+  SETTINGS_RANGES,
   NEWLINE_MODES,
   TRANSFER_MODES,
   WARNINGS,
@@ -46,6 +47,7 @@ function expectSettings(value: Settings): void {
     'hotkey',
     'language',
     'pollIntervalMs',
+    'previewWrap',
     'tabWidth',
     'transfer',
     'version',
@@ -87,11 +89,12 @@ describe('IPC type contract', () => {
     expect(contract.defaultSettings).toEqual({
       version: 1,
       capacity: 20,
-      hotkey: 'Alt+Shift+V',
+      hotkey: 'Alt+Shift+KeyV',
       tabWidth: 4,
       pollIntervalMs: 200,
       autostart: false,
       language: null,
+      previewWrap: true,
       transfer: {
         keepStyle: false,
         newline: 'keep',
@@ -119,6 +122,10 @@ describe('IPC type contract', () => {
     const info = contract.platformInfo as PlatformInfo;
     expect(keysOf(info)).toEqual(['capture', 'displayServer', 'os']);
     expect(CAPTURE_CAPABILITIES).toContain(info.capture);
+  });
+
+  it('mirrors the backend settings ranges', () => {
+    expect(SETTINGS_RANGES).toEqual(contract.settingsRanges);
   });
 
   it('uses the same event names as the Rust side', () => {

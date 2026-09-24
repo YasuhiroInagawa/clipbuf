@@ -56,6 +56,9 @@ pub fn run() {
             app::commands::get_platform_info,
             app::commands::hide_window,
             app::commands::open_settings,
+            app::commands::close_settings,
+            app::commands::suspend_hotkey,
+            app::commands::resume_hotkey,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

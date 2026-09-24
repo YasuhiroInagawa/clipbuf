@@ -96,15 +96,25 @@ pub fn process_once(state: &AppState, sink: &dyn EventSink) {
     let has_style = html.is_some() || rtf.is_some();
     let warnings = analysis::analyze(&text, has_style);
 
-    let dto = {
+    let (dto, evicted, items) = {
         let mut buffer = state.buffer.lock().expect("buffer lock");
+        let before = buffer.len();
         match buffer.push(text, html, rtf, warnings) {
-            PushResult::Pushed(id) => buffer.get(id).map(|item| item.to_dto()),
-            PushResult::Duplicate => None,
+            PushResult::Pushed(id) => {
+                // Adding at the capacity limit drops the oldest item; the frontend copy only
+                // learns about that from the whole list (2.2).
+                let evicted = buffer.len() == before;
+                let items = evicted.then(|| buffer.items().map(|i| i.to_dto()).collect());
+                (buffer.get(id).map(|item| item.to_dto()), evicted, items)
+            }
+            PushResult::Duplicate => (None, false, None),
         }
     };
     if let Some(dto) = dto {
         sink.item_added(dto);
+    }
+    if evicted && let Some(items) = items {
+        sink.items_changed(items);
     }
 }
 

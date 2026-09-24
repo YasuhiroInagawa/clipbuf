@@ -15,6 +15,7 @@
   // The context is created once per window and never swapped, so reading it eagerly is intended.
   // svelte-ignore state_referenced_locally
   const { items, selection, settings, notices, api } = ctx;
+  const settingsValue = settings.settings;
 
   const HIGHLIGHT_MS = 600;
   let highlightId: ItemId | null = $state(null);
@@ -135,6 +136,7 @@
     {highlightId}
     onTransfer={transfer}
     loadPreview={(id) => api.previewTransfer(id)}
+    previewWrap={$settingsValue?.previewWrap ?? true}
   />
   <footer class="footer">
     <button type="button" class="clear" onclick={() => void api.clearItems()}>

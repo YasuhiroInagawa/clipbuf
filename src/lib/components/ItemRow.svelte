@@ -14,11 +14,35 @@
     onSelect: () => void;
     /** Text this item would put on the clipboard with the current options (4.7). */
     loadPreview: () => Promise<TransferPreview>;
+    /** Wrap long lines in the preview (4.11, 4.12). */
+    previewWrap: boolean;
   }
 
-  let { item, selected, highlight, onTransfer, onSelect, loadPreview }: Props = $props();
+  let { item, selected, highlight, onTransfer, onSelect, loadPreview, previewWrap }: Props =
+    $props();
   let element: HTMLLIElement | undefined = $state();
   let previewOpen = $state(false);
+  /** The pointer travels through a gap between the row and the popover; close only if it has
+   *  not arrived in the popover shortly after leaving the row (4.8). */
+  let closeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const CLOSE_GRACE_MS = 120;
+
+  function openPreview(): void {
+    if (closeTimer) {
+      clearTimeout(closeTimer);
+      closeTimer = null;
+    }
+    previewOpen = true;
+  }
+
+  function requestClosePreview(): void {
+    if (closeTimer) clearTimeout(closeTimer);
+    closeTimer = setTimeout(() => {
+      previewOpen = false;
+      closeTimer = null;
+    }, CLOSE_GRACE_MS);
+  }
 
   // Keep the keyboard selection visible.
   $effect(() => {
@@ -57,7 +81,7 @@
   data-id={item.id}
   aria-selected={selected}
   onmouseenter={onSelect}
-  onmouseleave={() => (previewOpen = false)}
+  onmouseleave={requestClosePreview}
   onkeydown={onKeydown}
   onclick={() => {
     onSelect();
@@ -65,7 +89,7 @@
   }}
 >
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="text" onmouseover={() => (previewOpen = true)} onfocusin={() => (previewOpen = true)}>
+  <div class="text" onmouseover={openPreview} onfocusin={openPreview}>
     <PreviewLine text={item.text} />
   </div>
   <WarningIcons warnings={item.warnings} newlineKinds={newlineKindsIn(item.text)} />
@@ -84,7 +108,13 @@
 </li>
 
 {#if previewOpen}
-  <FullTextPreview load={loadPreview} anchorEl={element ?? null} />
+  <FullTextPreview
+    load={loadPreview}
+    anchorEl={element ?? null}
+    onPointerEnter={openPreview}
+    onPointerLeave={requestClosePreview}
+    wrap={previewWrap}
+  />
 {/if}
 
 <style>

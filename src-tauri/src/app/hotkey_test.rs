@@ -122,3 +122,56 @@ fn applying_the_same_shortcut_again_is_a_no_op() {
     state.apply(&reg, "alt+shift+v").unwrap();
     assert_eq!(reg.calls().len(), 1);
 }
+
+#[test]
+fn suspend_removes_the_os_registration_and_resume_restores_it() {
+    let reg = FakeRegistrar::new(&[]);
+    let state = HotkeyState::default();
+    state.apply(&reg, "Alt+Shift+V").unwrap();
+
+    // While the settings window records a new shortcut, the active one must not fire (9.5.1).
+    state.suspend(&reg);
+    assert!(reg.registered().is_empty());
+    assert_eq!(
+        state.current(),
+        Some(sc("Alt+Shift+V")),
+        "the choice is remembered"
+    );
+
+    state.resume(&reg).expect("restores");
+    assert_eq!(reg.registered(), vec![sc("Alt+Shift+V")]);
+}
+
+#[test]
+fn suspend_and_resume_are_harmless_without_a_registered_shortcut() {
+    let reg = FakeRegistrar::new(&[]);
+    let state = HotkeyState::default();
+    state.suspend(&reg);
+    assert!(state.resume(&reg).is_ok());
+    assert!(reg.registered().is_empty());
+}
+
+#[test]
+fn resume_reports_a_shortcut_the_os_no_longer_accepts() {
+    let reg = FakeRegistrar::new(&[]);
+    let state = HotkeyState::default();
+    state.apply(&reg, "Alt+Shift+V").unwrap();
+    state.suspend(&reg);
+
+    let hostile = FakeRegistrar::new(&["Alt+Shift+V"]);
+    assert_eq!(
+        state.resume(&hostile).unwrap_err().kind,
+        crate::model::ErrorKind::HotkeyUnavailable
+    );
+}
+
+#[test]
+fn applying_while_suspended_registers_the_new_shortcut() {
+    let reg = FakeRegistrar::new(&[]);
+    let state = HotkeyState::default();
+    state.apply(&reg, "Alt+Shift+V").unwrap();
+    state.suspend(&reg);
+    state.apply(&reg, "Ctrl+Shift+C").unwrap();
+    assert_eq!(reg.registered(), vec![sc("Ctrl+Shift+C")]);
+    assert_eq!(state.current(), Some(sc("Ctrl+Shift+C")));
+}

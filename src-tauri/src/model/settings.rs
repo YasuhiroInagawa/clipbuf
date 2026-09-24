@@ -35,6 +35,8 @@ pub struct Settings {
     pub autostart: bool,
     /// UI language override; `None` follows the OS (12.4).
     pub language: Option<Language>,
+    /// Wrap long lines in the full-text preview instead of scrolling sideways (4.11, 4.12).
+    pub preview_wrap: bool,
     /// Transfer toggles, app-wide (7.3).
     pub transfer: TransferOptions,
 }
@@ -44,11 +46,13 @@ impl Default for Settings {
         Self {
             version: SETTINGS_VERSION,
             capacity: 20,
-            hotkey: "Alt+Shift+V".to_string(),
+            // Physical-key spelling, the same form the settings recorder produces.
+            hotkey: "Alt+Shift+KeyV".to_string(),
             tab_width: 4,
             poll_interval_ms: 200,
             autostart: false,
             language: None,
+            preview_wrap: true,
             transfer: TransferOptions::default(),
         }
     }

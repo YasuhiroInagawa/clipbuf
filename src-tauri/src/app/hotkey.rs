@@ -27,11 +27,34 @@ pub trait Registrar {
 #[derive(Debug, Default)]
 pub struct HotkeyState {
     current: Mutex<Option<Shortcut>>,
+    /// True while the settings window records a new shortcut: the choice is remembered but
+    /// not registered with the OS, so the keys reach the recorder (9.5.1).
+    suspended: Mutex<bool>,
 }
 
 impl HotkeyState {
     pub fn current(&self) -> Option<Shortcut> {
         *self.current.lock().expect("hotkey lock")
+    }
+
+    /// Unregister the active hotkey for the duration of a recording. The choice is kept so
+    /// `resume` can put it back.
+    pub fn suspend(&self, registrar: &dyn Registrar) {
+        *self.suspended.lock().expect("hotkey lock") = true;
+        if let Some(current) = self.current() {
+            let _ = registrar.unregister(&current);
+        }
+    }
+
+    /// Register the remembered hotkey again after a recording ended.
+    pub fn resume(&self, registrar: &dyn Registrar) -> Result<(), AppError> {
+        *self.suspended.lock().expect("hotkey lock") = false;
+        let Some(current) = self.current() else {
+            return Ok(());
+        };
+        registrar
+            .register(&current)
+            .map_err(|_| AppError::from(ErrorKind::HotkeyUnavailable))
     }
 
     /// Make `shortcut` the active hotkey. On any failure the previously active hotkey stays
@@ -42,10 +65,14 @@ impl HotkeyState {
         if *current == Some(next) {
             return Ok(());
         }
-        if let Some(previous) = *current {
+        let suspended = *self.suspended.lock().expect("hotkey lock");
+        if let Some(previous) = *current
+            && !suspended
+        {
             let _ = registrar.unregister(&previous);
         }
         if registrar.register(&next).is_ok() {
+            *self.suspended.lock().expect("hotkey lock") = false;
             *current = Some(next);
             return Ok(());
         }

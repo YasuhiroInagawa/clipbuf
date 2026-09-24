@@ -75,5 +75,14 @@
   "token.bidi": "Bidirectional control",
   "token.control": "Control character",
   "preview.newlines": "Line breaks:",
-  "warning.mixedNewlines.hintWith": "{kinds} are mixed in this text."
+  "warning.mixedNewlines.hintWith": "{kinds} are mixed in this text.",
+  "settings.hotkey.needsModifier": "A global hotkey needs at least one modifier (Command, Control, Alt or Shift).",
+  "settings.tabWidth.hint": "Used by the \"tabs → spaces\" transfer option.",
+  "transfer.style.hint": "Whether HTML/RTF formatting travels with the text.",
+  "transfer.newline.hint": "What happens to line breaks: keep them, delete them, or turn each one into a space.",
+  "transfer.trim.hint": "Removes spaces (including full-width and no-break spaces), tabs and line breaks at the very start and end.",
+  "transfer.tabsToSpaces.hint": "Replaces each tab with the number of spaces set in Settings.",
+  "transfer.fullwidthToSpace.hint": "Replaces each full-width space (U+3000) with a normal space.",
+  "settings.previewWrap": "Wrap long lines in the preview",
+  "settings.previewWrap.hint": "Off shows each line as one line, scrolling sideways instead."
 }

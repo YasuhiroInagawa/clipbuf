@@ -80,6 +80,22 @@ fn structs_round_trip() {
 }
 
 #[test]
+fn settings_ranges_match_the_fixture() {
+    // The settings window validates per field before calling the backend, so the ranges it
+    // uses must be the ones `settings::validate` enforces.
+    let expected = section("settingsRanges");
+    let actual = serde_json::json!({
+        "capacity": { "min": CAPACITY_RANGE.start(), "max": CAPACITY_RANGE.end() },
+        "tabWidth": { "min": TAB_WIDTH_RANGE.start(), "max": TAB_WIDTH_RANGE.end() },
+        "pollIntervalMs": {
+            "min": POLL_INTERVAL_MS_RANGE.start(),
+            "max": POLL_INTERVAL_MS_RANGE.end(),
+        },
+    });
+    assert_eq!(actual, expected);
+}
+
+#[test]
 fn default_settings_match_fixture() {
     let expected = section("defaultSettings");
     let actual = serde_json::to_value(Settings::default()).expect("serializes");

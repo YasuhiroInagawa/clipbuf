@@ -6,11 +6,12 @@ import { createSettingsStore, type SettingsApi } from './settings';
 const defaults: Settings = {
   version: 1,
   capacity: 20,
-  hotkey: 'Alt+Shift+V',
+  hotkey: 'Alt+Shift+KeyV',
   tabWidth: 4,
   pollIntervalMs: 200,
   autostart: false,
   language: null,
+  previewWrap: true,
   transfer: {
     keepStyle: false,
     newline: 'keep',

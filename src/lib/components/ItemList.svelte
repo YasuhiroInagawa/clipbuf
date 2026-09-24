@@ -11,9 +11,10 @@
     highlightId: ItemId | null;
     onTransfer: (id: ItemId, mode: TransferMode) => void;
     loadPreview: (id: ItemId) => Promise<TransferPreview>;
+    previewWrap: boolean;
   }
 
-  let { items, selection, highlightId, onTransfer, loadPreview }: Props = $props();
+  let { items, selection, highlightId, onTransfer, loadPreview, previewWrap }: Props = $props();
   const selectedId = $derived(selection.selectedId);
 </script>
 
@@ -29,6 +30,7 @@
         onSelect={() => selection.select(item.id)}
         onTransfer={(mode) => onTransfer(item.id, mode)}
         loadPreview={() => loadPreview(item.id)}
+        {previewWrap}
       />
     {/each}
   </ul>

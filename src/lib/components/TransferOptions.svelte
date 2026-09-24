@@ -26,7 +26,7 @@
 
 {#if transfer}
   <div class="options" role="group" aria-label={$t('transfer.title')}>
-    <span class="radios">
+    <span class="radios" title={$t('transfer.style.hint')}>
       <span class="radios-label">{$t('transfer.style')}:</span>
       <label class="opt">
         <input
@@ -50,7 +50,7 @@
 
     <span class="sep" aria-hidden="true"></span>
 
-    <span class="radios" title={hint}>
+    <span class="radios" title={hint ?? $t('transfer.newline.hint')}>
       <span class="radios-label">{$t('transfer.newline')}:</span>
       {#each NEWLINE_MODES as mode (mode)}
         <label class="opt">
@@ -68,7 +68,7 @@
 
     <span class="sep" aria-hidden="true"></span>
 
-    <label class="opt" title={hint}>
+    <label class="opt" title={hint ?? $t('transfer.trim.hint')}>
       <input
         type="checkbox"
         checked={transfer.trim}
@@ -79,7 +79,7 @@
 
     <span class="sep" aria-hidden="true"></span>
 
-    <label class="opt" title={hint}>
+    <label class="opt" title={hint ?? $t('transfer.tabsToSpaces.hint')}>
       <input
         type="checkbox"
         checked={transfer.tabsToSpaces}
@@ -90,7 +90,7 @@
 
     <span class="sep" aria-hidden="true"></span>
 
-    <label class="opt" title={hint}>
+    <label class="opt" title={hint ?? $t('transfer.fullwidthToSpace.hint')}>
       <input
         type="checkbox"
         checked={transfer.fullwidthToSpace}

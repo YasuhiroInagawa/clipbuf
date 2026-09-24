@@ -32,6 +32,7 @@
     "pollIntervalMs": 300,
     "autostart": true,
     "language": "en",
+    "previewWrap": false,
     "transfer": {
       "keepStyle": false,
       "newline": "remove",
@@ -43,17 +44,32 @@
   "defaultSettings": {
     "version": 1,
     "capacity": 20,
-    "hotkey": "Alt+Shift+V",
+    "hotkey": "Alt+Shift+KeyV",
     "tabWidth": 4,
     "pollIntervalMs": 200,
     "autostart": false,
     "language": null,
+    "previewWrap": true,
     "transfer": {
       "keepStyle": false,
       "newline": "keep",
       "trim": false,
       "tabsToSpaces": false,
       "fullwidthToSpace": false
+    }
+  },
+  "settingsRanges": {
+    "capacity": {
+      "min": 1,
+      "max": 200
+    },
+    "tabWidth": {
+      "min": 1,
+      "max": 16
+    },
+    "pollIntervalMs": {
+      "min": 50,
+      "max": 2000
     }
   },
   "transferOutcome": {

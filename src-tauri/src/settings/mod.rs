@@ -24,6 +24,7 @@ pub struct SettingsDiff {
     pub poll_interval: bool,
     pub autostart: bool,
     pub language: bool,
+    pub preview_wrap: bool,
     pub transfer: bool,
 }
 
@@ -35,6 +36,7 @@ impl SettingsDiff {
             || self.poll_interval
             || self.autostart
             || self.language
+            || self.preview_wrap
             || self.transfer
     }
 }
@@ -63,6 +65,7 @@ struct Partial {
     poll_interval_ms: Value,
     autostart: Value,
     language: Value,
+    preview_wrap: Value,
     transfer: Value,
 }
 
@@ -102,6 +105,7 @@ pub fn sanitize(value: Value) -> Settings {
         ),
         autostart: pick(p.autostart, |_| true, d.autostart),
         language: pick::<Option<Language>>(p.language, |_| true, d.language),
+        preview_wrap: pick(p.preview_wrap, |_| true, d.preview_wrap),
         transfer: TransferOptions {
             keep_style: pick(t.keep_style, |_| true, dt.keep_style),
             newline: pick::<NewlineMode>(t.newline, |_| true, dt.newline),
@@ -120,6 +124,7 @@ pub fn diff(old: &Settings, new: &Settings) -> SettingsDiff {
         poll_interval: old.poll_interval_ms != new.poll_interval_ms,
         autostart: old.autostart != new.autostart,
         language: old.language != new.language,
+        preview_wrap: old.preview_wrap != new.preview_wrap,
         transfer: old.transfer != new.transfer,
     }
 }

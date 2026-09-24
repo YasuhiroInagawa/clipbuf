@@ -8,31 +8,16 @@
   }
 
   let { text }: Props = $props();
-  let line: HTMLDivElement | undefined = $state();
-
   const result = $derived(tokenize(text));
-
-  function resetScroll(): void {
-    if (line) line.scrollLeft = 0;
-  }
-
-  /** Mouse users scroll on hover; put the line back unless it keeps keyboard focus. */
-  function onMouseLeave(): void {
-    if (line && document.activeElement !== line) resetScroll();
-  }
 </script>
 
 <div
   class="preview"
-  bind:this={line}
   role="textbox"
   aria-readonly="true"
   aria-multiline="false"
-  tabindex="0"
   oncopy={(e) => e.preventDefault()}
   oncut={(e) => e.preventDefault()}
-  onfocusout={resetScroll}
-  onmouseleave={onMouseLeave}
 >
   {#each result.tokens as token, i (i)}
     {#if token.kind === 'text'}
@@ -53,25 +38,21 @@
 </div>
 
 <style>
+  /* Long text is simply clipped; the full text is read in the hover preview (4.1, 4.4). */
   .preview {
     flex: 1 1 auto;
     min-width: 0;
     height: 1.6em;
     line-height: 1.6em;
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: hidden;
     white-space: nowrap;
+    /* Fade the right edge so it is obvious that the line continues. */
+    mask-image: linear-gradient(to right, #000 calc(100% - 2em), transparent 100%);
     font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
     font-size: 0.9em;
     user-select: none;
     -webkit-user-select: none;
     cursor: default;
-    outline: none;
-    scrollbar-width: thin;
-  }
-  .preview:focus-visible {
-    box-shadow: inset 0 0 0 1px #5b6ee1;
-    border-radius: 3px;
   }
   .tok {
     white-space: pre;

@@ -316,7 +316,7 @@ flowchart TD
 | 1.7 | 非表示中も取り込む | CaptureService（ウィンドウ状態に依存しない） | — | 取り込み |
 | 1.8 | 1 秒以内に反映 | Adapter（poll 200ms）, CaptureService | item-added | 取り込み |
 | 2.1 | 新しい順・上限 N | Buffer | Buffer.capacity | — |
-| 2.2 | 超過時は古い順に削除 | Buffer | Buffer.push | — |
+| 2.2 | 超過時は古い順に削除 + 反映 | Buffer, CaptureService（押し出し時は items-changed も送出） | Buffer.push, items-changed | 取り込み |
 | 2.3 | 個別削除 | commands.remove_item, Buffer | remove_item, items-changed | — |
 | 2.4 | 全削除 | commands.clear_items, Buffer | clear_items, items-changed | — |
 | 2.5 | N 縮小時に切り詰め | SettingsStore → Buffer.set_capacity | set_settings, items-changed | — |
@@ -330,14 +330,18 @@ flowchart TD
 | 3.7 | CRLF/LF/CR を色で区別 | charset, tokenize, PreviewLine, FullTextPreview | PreviewToken.value | — |
 | 3.8 | 改行記号のホバーで種別表示 | PreviewLine, FullTextPreview（title） | tokenLabel | — |
 | 3.9 | プレビューに改行種別の凡例 | FullTextPreview | newlineKind | — |
-| 4.1 | 横スクロール | PreviewLine | — | — |
+| 4.1 | 収まらない分は見切れる | PreviewLine（overflow hidden + フェード） | — | — |
 | 4.2 | 編集不可 | PreviewLine（非 contenteditable） | — | — |
 | 4.3 | 選択・コピー不可 | PreviewLine（user-select none, copy 抑止） | — | — |
-| 4.4 | フォーカス喪失で先頭へ | PreviewLine（blur / focusout ハンドラ） | — | — |
+| 4.4 | 横スクロールバーを出さない | PreviewLine | — | — |
 | 4.5 | ホバーで全文プレビュー | ItemRow, FullTextPreview | preview_transfer | 全文プレビュー |
 | 4.6 | 可視化を保ち改行を反映 | FullTextPreview, tokenize | PreviewToken | 全文プレビュー |
 | 4.7 | 転送オプション適用後を表示 | commands.preview_transfer, ops::resolve_transfer | TransferPreview | 全文プレビュー |
-| 4.8 | ポインタが外れたら閉じる | ItemRow, FullTextPreview | — | 全文プレビュー |
+| 4.8 | 両方から外れたら閉じる | ItemRow, FullTextPreview | — | 全文プレビュー |
+| 4.9 | プレビュー内をスクロール | FullTextPreview（pointer-events 有効） | — | — |
+| 4.10 | プレビューのリサイズと記憶 | FullTextPreview（CSS resize + モジュール変数） | — | — |
+| 4.11 | 折り返し表示 | FullTextPreview, Settings.previewWrap | — | — |
+| 4.12 | 折り返さず横スクロール | FullTextPreview, Settings.previewWrap | — | — |
 | 5.1 | スタイルあり | analysis（has_style） | Warning::HasStyle | — |
 | 5.2 | 先頭末尾の空白・改行 | analysis::edge | Warning::EdgeWhitespace | — |
 | 5.3 | タブあり | analysis | Warning::HasTab | — |
@@ -360,6 +364,7 @@ flowchart TD
 | 6.9 | 元データ非破壊 | transform（新文字列を返す）, Buffer | — | 転送 |
 | 6.10 | 書き込み失敗の通知 | commands, Notice | AppError WriteFailed | 転送 |
 | 7.1 | トグル常時表示 | TransferOptions | Settings.transfer | — |
+| 7.1.1 | 各トグルの説明 | TransferOptions（title）, locales | — | — |
 | 7.2 | 転送時点のトグルを適用 | commands.transfer_item（Settings を読む） | — | 転送 |
 | 7.3 | トグルはアプリ共通・永続 | SettingsStore | set_settings | — |
 | 7.4 | スタイル削除 | commands | write(text only) | 転送 |
@@ -383,7 +388,10 @@ flowchart TD
 | 9.3 | 再起動なしで反映 | SettingsStore.apply → hotkey / Buffer / autostart / i18n | settings-changed | — |
 | 9.4 | ホットキー競合時は維持 | hotkey | AppError HotkeyUnavailable | — |
 | 9.5 | 自動起動時は非表示 | autostart plugin（`--hidden`）, window | — | — |
+| 9.5.1 | 記録中はホットキーを無効化 | SettingsWindow, commands.suspend_hotkey / resume_hotkey, HotkeyState | suspend_hotkey, resume_hotkey | — |
 | 9.6 | トグルは設定画面に置かない | SettingsWindow（transfer を含まない） | — | — |
+| 9.7 | 保存成功で設定ウィンドウを閉じる | SettingsWindow, commands.close_settings, window | close_settings | — |
+| 9.8 | 保存せず閉じたら破棄 | SettingsWindow（draft はローカル） | — | — |
 | 10.1 | メモリのみ | Buffer（永続化コードなし）, SettingsStore（項目を含まない） | — | — |
 | 10.2 | 終了時破棄 | プロセス終了で消える（永続化なし） | — | — |
 | 10.3 | 内容を送信しない | updater 以外の通信なし、CSP | — | — |
@@ -489,11 +497,12 @@ pub enum TransferMode { Options, Plain, Raw }
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub capacity: usize,            // 既定 20、範囲 1..=200
-    pub hotkey: String,             // 既定 "Alt+Shift+V"
+    pub hotkey: String,             // 既定 "Alt+Shift+KeyV"
     pub tab_width: u8,              // 既定 4、範囲 1..=16
     pub poll_interval_ms: u32,      // 既定 200、範囲 50..=2000（macOS / Wayland ポーリングで使用）
     pub autostart: bool,            // 既定 false
     pub language: Option<Language>, // None = OS に従う
+    pub preview_wrap: bool,         // 既定 true（全文プレビューで長い行を折り返す）
     pub transfer: TransferOptions,  // 既定 keep_style=false, newline=Keep, trim=false, tabs=false, fullwidth=false
 }
 
@@ -701,7 +710,7 @@ pub struct SettingsDiff { pub capacity: bool, pub hotkey: bool, pub autostart: b
 
 - 専用スレッドで `Receiver<ClipboardEvent>` を待つ。100ms のデバウンス後に `read()`
 - フィルタ順: `text == None` → 破棄、`concealed` → 破棄、`own_marker` → 破棄、`LastWrite` のハッシュ一致 → 破棄
-- `analyze` → `Buffer.push` → `Pushed` なら `clipbuf://item-added` を送出
+- `analyze` → `Buffer.push` → `Pushed` なら `clipbuf://item-added` を送出。追加と同時に古い項目が押し出された場合は続けて `clipbuf://items-changed` も送り、frontend の写しが上限を超えないようにする（2.2）
 - `read` 失敗は無視して次の変化を待つ（連続 5 回失敗で `clipbuf://capture-status` に `ReadFailed` を送る）
 
 #### commands
@@ -724,6 +733,9 @@ pub struct SettingsDiff { pub capacity: bool, pub hotkey: bool, pub autostart: b
 | `set_settings` | `{ settings: Settings }` | `Settings`（適用後） | `InvalidSettings`, `HotkeyUnavailable`, `SettingsIo` |
 | `get_platform_info` | — | `PlatformInfo { os, display_server, capture: CaptureCapability }` | — |
 | `hide_window` | — | `()` | — |
+| `close_settings` | — | `()` | — |
+| `suspend_hotkey` | — | `()` | — |
+| `resume_hotkey` | — | `()` | `HotkeyUnavailable` |
 
 - 転送内容の決定は `ops::resolve_transfer(item, settings, mode)` に集約し、`transfer_item`（書き込む）と
   `preview_transfer`（書き込まずテキストだけ返す）が共有する。これによりプレビューは「実際に転送される内容」と一致する（4.7）
@@ -754,7 +766,7 @@ pub struct SettingsDiff { pub capacity: bool, pub hotkey: bool, pub autostart: b
   - **Settings の配置**: 最前面のメインウィンドウに隠れないよう、メインの右隣 → 左隣 → 下の順で、メインと同じモニタ内に置く（`place_beside`、純粋関数）
   - **Settings とメインの表示同期**: メインを隠す操作（ホットキー / トレイ / 閉じる / `hide_window`）は開いている Settings も隠し、次にメインを表示したとき一緒に復帰させる。Settings を終えるのはユーザーのクローズ操作のみ（「clipbuf を隠す＝全体をどける」という利用意図に合わせた実装時の判断）
 - `tray.rs`: メニュー「表示/非表示」「設定」「終了」。左クリックで toggle
-- `hotkey.rs`: `register(shortcut)` は既存を解除してから登録。失敗時は既存を再登録して `HotkeyUnavailable`
+- `hotkey.rs`: `register(shortcut)` は既存を解除してから登録。失敗時は既存を再登録して `HotkeyUnavailable`。`suspend()` / `resume()` は記録中だけ OS 登録を外し、記録後に元のホットキーへ戻す（9.5.1）
 - 起動引数 `--hidden`（autostart plugin の `args`）でウィンドウを非表示のまま起動（9.5）
 - `single-instance`: 2 つ目の起動は既存プロセスに通知し、`toggle()` で表示
 - `platform.rs`: `PlatformInfo` を組み立て、起動時に `capture-status` を送出
@@ -819,12 +831,12 @@ export function tokenize(text: string): { tokens: PreviewToken[]; truncated: boo
 - `MainWindow`: グローバルキー（↑↓ 選択、Enter = options 転送、Shift+Enter = plain 転送、Delete = 削除、Escape = `hideWindow`）。`Notice` と `UpdatePrompt` を配置。`capture-status` を受けて取り込み不可 / 限定 / 拒否の通知を出す
 - `TransferOptions`: 書式（保持 / 削除のラジオ）、改行（そのまま / 削除 / 空白のラジオ）、トリム、タブ変換、全角空白変換。グループ間に区切り線を置く。`keepStyle` が有効なとき他のトグルを「書式付き項目には適用されない」旨のヒント付きで表示（無効化はしない：書式なし項目には適用されるため 7.6）
 - `ItemRow`: クリックで `transferItem(id, 'options')`、「プレーン」ボタンを常時表示し、「原文」は書式付きの項目にだけ表示する（書式なしの項目では行クリックと結果が変わらず、ボタンの意味が伝わらないため）。どちらも警告アイコンと区別できるボタン様の見た目で、説明にテキスト変換が適用されないことを明記する。転送成功で 600ms のハイライト、`skippedTransforms` なら `Notice` へ通知。テキストへのホバーで `FullTextPreview` を開き、離れると閉じる（4.5, 4.8）
-- `FullTextPreview`: `preview_transfer` の結果を `tokenize` し、改行トークンで実際に行を分けて描画する。本文に含まれる改行種別の凡例（色見本 + CRLF/LF/CR）を下部に並べる（3.9）。タブは 1 文字分の記号。可視化とスクロールは `PreviewLine` と同じ規則。ポップオーバーは行の近くに出し、画面外にはみ出さないよう位置を補正する
-- `PreviewLine`: `tokenize` の結果を `<span class={kind}>` で描画。改行は値（`\r\n` / `\n` / `\r`）で色を分ける（3.7）。`overflow-x: auto; white-space: nowrap; user-select: none`、`copy` イベントを `preventDefault`、`tabindex="0"`、`focusout` で `scrollLeft = 0`。行全体の高さは 1 行固定
+- `FullTextPreview`: `preview_transfer` の結果を `tokenize` し、改行トークンで実際に行を分けて描画する。本文に含まれる改行種別の凡例（色見本 + CRLF/LF/CR）を下部に並べる（3.9）。タブは 1 文字分の記号。ポップオーバーは行の近くに出し、画面外にはみ出さないよう位置を補正する。**ポインタを受け付ける**ため中をスクロールでき、行とポップオーバーの両方から離れたときに短い猶予をおいて閉じる（4.8, 4.9）。CSS の `resize` で大きさを変えられ、変更後の大きさはモジュール変数に記憶してプロセス内で再利用する（4.10）。`Settings.preview_wrap` が真なら折り返し、偽なら折り返さず横スクロール（4.11, 4.12）
+- `PreviewLine`: `tokenize` の結果を `<span class={kind}>` で描画。改行は値（`\r\n` / `\n` / `\r`）で色を分ける（3.7）。`overflow: hidden; white-space: nowrap; user-select: none`、`copy` イベントを `preventDefault`。右端はフェードで見切れを示す。全文は `FullTextPreview` で見るため行はスクロールしない（4.1, 4.4）。行全体の高さは 1 行固定
 - `WarningIcons`: `warnings` に含まれるものだけを固定順で描画。`title` に i18n の説明（5.8）
 - `Notice`: 種別（success / info / error）と自動消去
 - `UpdatePrompt`: 起動時に `check()`、更新があればバナー表示。承諾で `downloadAndInstall()` → 再起動確認。拒否でバナーを閉じる（13.6–13.8）
-- `SettingsWindow`: capacity、hotkey（キー入力の記録 UI）、tabWidth、pollIntervalMs（macOS / Wayland 以外は非表示）、autostart、language。`transfer` は含まない（9.6）。`HotkeyUnavailable` はホットキー欄のエラーとして表示し他の変更も保持したまま再入力を促す
+- `SettingsWindow`: 保存成功でウィンドウを閉じる（9.7）。閉じるボタンは編集の破棄（9.8）。capacity、hotkey（キー入力の記録 UI）、previewWrap、tabWidth、pollIntervalMs（macOS / Wayland 以外は非表示）、autostart、language。`transfer` は含まない（9.6）。`HotkeyUnavailable` はホットキー欄のエラーとして表示し他の変更も保持したまま再入力を促す
 
 ### Ops
 

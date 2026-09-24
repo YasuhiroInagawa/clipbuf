@@ -1,26 +1,36 @@
 <script lang="ts">
-  import { createAppContext } from '$lib/app';
+  import { onMount } from 'svelte';
+  import { createAppContext, createSettingsContext, syncLanguage } from '$lib/app';
   import { currentWindowLabel } from '$lib/ipc/window';
   import MainWindow from '$lib/components/MainWindow.svelte';
-  import { t } from '$lib/stores/i18n';
+  import SettingsWindow from '$lib/components/SettingsWindow.svelte';
 
-  const label = currentWindowLabel();
-  const ctx = label === 'main' ? createAppContext() : null;
+  const isMain = currentWindowLabel() === 'main';
+  const main = isMain ? createAppContext() : null;
+  const settings = isMain ? null : createSettingsContext();
+
+  onMount(() => {
+    if (settings) {
+      void settings.store.start();
+      const stop = syncLanguage(settings.store);
+      return () => {
+        stop();
+        settings.store.stop();
+      };
+    }
+    // The main window starts its own stores in MainWindow; only the language link is added here.
+    return main ? syncLanguage(main.settings) : undefined;
+  });
 </script>
 
-{#if ctx}
-  <MainWindow {ctx} />
-{:else}
-  <!-- Settings window content arrives with task 5.5 -->
-  <main class="placeholder"><p>{$t('settings.title')}</p></main>
+{#if main}
+  <MainWindow ctx={main} />
+{:else if settings}
+  <SettingsWindow
+    store={settings.store}
+    getPlatformInfo={settings.getPlatformInfo}
+    closeWindow={settings.closeWindow}
+    suspendHotkey={settings.suspendHotkey}
+    resumeHotkey={settings.resumeHotkey}
+  />
 {/if}
-
-<style>
-  .placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    opacity: 0.6;
-  }
-</style>

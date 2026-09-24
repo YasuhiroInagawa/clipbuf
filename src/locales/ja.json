@@ -75,5 +75,14 @@
   "token.bidi": "双方向制御文字",
   "token.control": "制御文字",
   "preview.newlines": "改行:",
-  "warning.mixedNewlines.hintWith": "{kinds} が混在しています。"
+  "warning.mixedNewlines.hintWith": "{kinds} が混在しています。",
+  "settings.hotkey.needsModifier": "グローバルホットキーには修飾キー（Command / Control / Alt / Shift）が 1 つ以上必要です。",
+  "settings.tabWidth.hint": "「タブ → 空白」の転送オプションで使います。",
+  "transfer.style.hint": "書式（HTML/RTF）をテキストと一緒に転送するかどうか。",
+  "transfer.newline.hint": "改行の扱い。そのまま残す / 削除する / 1 つにつき半角空白 1 つに置き換える。",
+  "transfer.trim.hint": "先頭と末尾にある空白（全角空白・NBSP を含む）・タブ・改行を取り除きます。",
+  "transfer.tabsToSpaces.hint": "タブ 1 つを、設定画面で指定した個数の半角空白に置き換えます。",
+  "transfer.fullwidthToSpace.hint": "全角空白（U+3000）を半角空白 1 つに置き換えます。",
+  "settings.previewWrap": "プレビューで長い行を折り返す",
+  "settings.previewWrap.hint": "オフにすると 1 行を 1 行のまま表示し、横スクロールで読みます。"
 }

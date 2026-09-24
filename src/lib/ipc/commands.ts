@@ -30,6 +30,9 @@ export const commands = {
   getPlatformInfo: (): Promise<PlatformInfo> => invoke('get_platform_info'),
   hideWindow: (): Promise<void> => invoke('hide_window'),
   openSettings: (): Promise<void> => invoke('open_settings'),
+  closeSettings: (): Promise<void> => invoke('close_settings'),
+  suspendHotkey: (): Promise<void> => invoke('suspend_hotkey'),
+  resumeHotkey: (): Promise<void> => invoke('resume_hotkey'),
 } as const;
 
 export type Commands = typeof commands;

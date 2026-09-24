@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { fireEvent, render } from '@testing-library/svelte';
+import { render } from '@testing-library/svelte';
 import { beforeAll, describe, expect, it } from 'vitest';
 import en from '../../locales/en.json';
 import { i18n } from '$lib/stores/i18n';
@@ -36,19 +36,21 @@ describe('PreviewLine', () => {
     const line = container.querySelector('.preview') as HTMLElement;
     expect(line).toHaveAttribute('role', 'textbox');
     expect(line).toHaveAttribute('aria-readonly', 'true');
-    expect(line).toHaveAttribute('tabindex', '0');
     expect(line.getAttribute('contenteditable')).not.toBe('true');
     const copy = new Event('copy', { bubbles: true, cancelable: true });
     line.dispatchEvent(copy);
     expect(copy.defaultPrevented).toBe(true);
   });
 
-  it('resets the horizontal scroll position when focus leaves (4.4)', async () => {
+  it('clips instead of scrolling, so no scrollbar appears on the row (4.1, 4.4)', () => {
     const { container } = render(PreviewLine, { text: 'x'.repeat(500) });
     const line = container.querySelector('.preview') as HTMLElement;
-    line.scrollLeft = 120;
-    await fireEvent.focusOut(line);
-    expect(line.scrollLeft).toBe(0);
+    const style = getComputedStyle(line);
+    // jsdom keeps the shorthand as written, so check `overflow` rather than `overflowX`.
+    expect(style.overflow).toBe('hidden');
+    expect(style.whiteSpace).toBe('nowrap');
+    // Nothing to scroll means nothing to tab into either.
+    expect(line).not.toHaveAttribute('tabindex');
   });
 
   it('marks truncated previews with an ellipsis (3.6)', () => {

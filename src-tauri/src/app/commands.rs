@@ -87,6 +87,26 @@ pub fn hide_window(app: tauri::AppHandle) {
     super::window::hide(&app);
 }
 
+/// Stop the global hotkey from firing while the settings window records a new one (9.5.1).
+#[tauri::command]
+pub fn suspend_hotkey(app: tauri::AppHandle, hotkeys: State<'_, HotkeyState>) {
+    hotkeys.suspend(&PluginRegistrar(app));
+}
+
+#[tauri::command]
+pub fn resume_hotkey(
+    app: tauri::AppHandle,
+    hotkeys: State<'_, HotkeyState>,
+) -> Result<(), AppError> {
+    hotkeys.resume(&PluginRegistrar(app))
+}
+
+#[tauri::command]
+pub fn close_settings(app: tauri::AppHandle) -> Result<(), AppError> {
+    super::window::close_settings(&app)
+        .map_err(|_| AppError::from(crate::model::ErrorKind::SettingsIo))
+}
+
 #[tauri::command]
 pub fn open_settings(app: tauri::AppHandle) -> Result<(), AppError> {
     super::window::open_settings(&app)

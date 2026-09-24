@@ -14,11 +14,12 @@ beforeAll(() => i18n.setLanguage('en'));
 const defaults: Settings = {
   version: 1,
   capacity: 20,
-  hotkey: 'Alt+Shift+V',
+  hotkey: 'Alt+Shift+KeyV',
   tabWidth: 4,
   pollIntervalMs: 200,
   autostart: false,
   language: null,
+  previewWrap: true,
   transfer: {
     keepStyle: false,
     newline: 'keep',
@@ -57,6 +58,23 @@ describe('TransferOptions', () => {
     expect(screen.getByLabelText(en['transfer.newline.keep'])).toBeChecked();
     expect(screen.getByLabelText(en['transfer.newline.remove'])).not.toBeChecked();
     expect(screen.getByLabelText(en['transfer.newline.space'])).not.toBeChecked();
+  });
+
+  it('explains every option on hover (7.1.1)', async () => {
+    const { container } = await setup();
+    expect(container.querySelector('.radios')).toHaveAttribute('title', en['transfer.style.hint']);
+    expect(screen.getByLabelText(en['transfer.trim']).closest('label')).toHaveAttribute(
+      'title',
+      en['transfer.trim.hint'],
+    );
+    expect(screen.getByLabelText(en['transfer.tabsToSpaces']).closest('label')).toHaveAttribute(
+      'title',
+      en['transfer.tabsToSpaces.hint'],
+    );
+    expect(screen.getByLabelText(en['transfer.fullwidthToSpace']).closest('label')).toHaveAttribute(
+      'title',
+      en['transfer.fullwidthToSpace.hint'],
+    );
   });
 
   it('separates the option groups visually (7.1)', async () => {

@@ -53,8 +53,19 @@ export interface Settings {
   autostart: boolean;
   /** `null` follows the OS language. */
   language: Language | null;
+  /** Wrap long lines in the full-text preview instead of scrolling sideways (4.11, 4.12). */
+  previewWrap: boolean;
   transfer: TransferOptions;
 }
+
+/** Inclusive ranges enforced by the backend; mirrored in `tests/fixtures/contract.json`. */
+export const SETTINGS_RANGES = {
+  capacity: { min: 1, max: 200 },
+  tabWidth: { min: 1, max: 16 },
+  pollIntervalMs: { min: 50, max: 2000 },
+} as const;
+
+export type RangedSettingsField = keyof typeof SETTINGS_RANGES;
 
 export interface ItemDto {
   id: ItemId;

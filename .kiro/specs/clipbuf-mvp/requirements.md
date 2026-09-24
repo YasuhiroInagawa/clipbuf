@@ -48,7 +48,7 @@ clipbuf は、デスクトップ（Windows / macOS / Linux）でアプリ間の�
 
 #### Acceptance Criteria
 1. The clipbuf shall 項目を新しい順に並べ、設定された保持件数 N を上限として保持する
-2. When 項目数が保持件数 N を超える, the clipbuf shall 最も古い項目から削除する
+2. When 項目数が保持件数 N を超える, the clipbuf shall 最も古い項目から削除し、削除後の一覧を表示に反映する
 3. When ユーザーが項目の削除操作を行う, the clipbuf shall その項目のみをリストから削除する
 4. When ユーザーが全削除操作を行う, the clipbuf shall リストのすべての項目を削除する
 5. When 保持件数 N の設定が現在の項目数より小さい値に変更される, the clipbuf shall 古い項目から削除して N 件に収める
@@ -72,14 +72,18 @@ clipbuf は、デスクトップ（Windows / macOS / Linux）でアプリ間の�
 **Objective:** As a ユーザー, I want 1 行に収まらない長いテキストの全文を、転送されるままの姿で確認できること, so that 貼り付け先へ移る前にここで内容を正確に確かめられる
 
 #### Acceptance Criteria
-1. When 項目のテキストが行の幅に収まらない, the clipbuf shall その行を横スクロールして全文を閲覧できるようにする
+1. When 項目のテキストが行の幅に収まらない, the clipbuf shall 収まらない部分を見切れさせ、見切れていることが分かる見た目にする
 2. The clipbuf shall 項目のテキスト表示を編集不可とする
 3. The clipbuf shall 項目のテキスト表示上での文字列選択とコピーを許可しない
-4. When 横スクロールした項目からフォーカスが外れる, the clipbuf shall その項目のスクロール位置を先頭に戻す
+4. The clipbuf shall 行のテキスト表示に横スクロールバーを出さない（全文は全文プレビューで確認する）
 5. When ユーザーが項目のテキストにポインタを合わせる, the clipbuf shall その項目の全文プレビューを表示する
 6. The clipbuf shall 全文プレビューで、不可視文字の可視化を保ったまま改行位置で実際に改行して表示し、タブを 1 文字分の記号として表示する
 7. The clipbuf shall 全文プレビューに、その時点の転送オプションを適用した後の内容を表示する
-8. When ポインタが項目のテキストから外れる, the clipbuf shall 全文プレビューを閉じる
+8. When ポインタが項目と全文プレビューの両方から外れる, the clipbuf shall 全文プレビューを閉じる
+9. The clipbuf shall 全文プレビューが画面に収まらない場合、プレビュー内をスクロールして残りを読めるようにする
+10. The clipbuf shall ユーザーが全文プレビューの大きさを変更できるようにし、変更後の大きさをアプリの実行中は次回の表示にも用いる
+11. Where 「プレビューで長い行を折り返す」が有効, the clipbuf shall 全文プレビューの行をプレビューの幅で折り返して表示し、横スクロールを生じさせない
+12. Where 「プレビューで長い行を折り返す」が無効, the clipbuf shall 行を折り返さずに表示し、横スクロールで残りを読めるようにする
 
 ### Requirement 5: 警告ステータスの表示
 **Objective:** As a ユーザー, I want 貼り付け事故につながる特徴が一目で分かること, so that 無害化オプションを選ぶ判断ができる
@@ -117,6 +121,7 @@ clipbuf は、デスクトップ（Windows / macOS / Linux）でアプリ間の�
 
 #### Acceptance Criteria
 1. The clipbuf shall 以下の転送オプションをリストと同じウィンドウ上に常時表示のトグルとして提供する：スタイルの保持/削除、改行の処理（そのまま/削除/空白に置換）、先頭末尾の空白・改行のトリム、タブの空白への変換、全角空白の半角空白への変換
+1.1. When ユーザーが転送オプションにポインタを合わせる, the clipbuf shall そのオプションが何をするかの説明を表示する
 2. When 転送が行われる, the clipbuf shall その時点のトグル状態を適用する（項目ごとにオプションを持たない）
 3. The clipbuf shall トグル状態をアプリ全体で共通の設定として保持し、アプリの再起動後も維持する
 4. When 「スタイルの削除」が有効で転送される, the clipbuf shall 書式付きデータを含めず、テキスト本文のみを書き込む
@@ -145,12 +150,15 @@ clipbuf は、デスクトップ（Windows / macOS / Linux）でアプリ間の�
 **Objective:** As a ユーザー, I want 保持件数やホットキーなどを自分の使い方に合わせられること, so that 環境ごとに快適に使える
 
 #### Acceptance Criteria
-1. The clipbuf shall 設定画面で以下を変更できるようにする：保持件数 N、グローバルホットキー、タブ変換時の空白個数、クリップボード確認間隔（対応 OS のみ）、OS ログイン時の自動起動、UI 言語
+1. The clipbuf shall 設定画面で以下を変更できるようにする：保持件数 N、グローバルホットキー、タブ変換時の空白個数、クリップボード確認間隔（対応 OS のみ）、OS ログイン時の自動起動、UI 言語、プレビューで長い行を折り返すかどうか
 2. The clipbuf shall 設定をアプリの再起動後も維持する
 3. When 設定が変更される, the clipbuf shall 再起動なしで新しい設定を反映する
 4. If ユーザーが指定したグローバルホットキーが他のアプリまたは OS に既に使用されている, the clipbuf shall 登録できなかった旨を表示し、直前の設定を維持する
 5. When 「OS ログイン時の自動起動」が有効にされる, the clipbuf shall 次回の OS ログイン時にウィンドウを非表示のまま起動する
+5.1. While ユーザーがホットキーを記録している, the clipbuf shall 現在のグローバルホットキーを一時的に無効化し、押されたキーが記録に届くようにする
 6. The clipbuf shall 転送オプションのトグルを設定画面には置かず、リストのウィンドウ上でのみ変更できるようにする
+7. When 設定の保存に成功する, the clipbuf shall 設定ウィンドウを閉じる
+8. When ユーザーが保存せずに設定ウィンドウを閉じる, the clipbuf shall 編集中の内容を破棄し設定を変更しない
 
 ### Requirement 10: 履歴の非永続化とプライバシー
 **Objective:** As a ユーザー, I want コピーした内容が端末に残ったり外部に送られたりしないこと, so that 機密情報を扱う作業でも安心して使える

@@ -1,3 +1,8 @@
+<script lang="ts" module>
+  /** Size the user last dragged the popover to; kept for this process only (4.10). */
+  let rememberedSize: { width: number; height: number } | null = null;
+</script>
+
 <script lang="ts">
   import type { TransferPreview } from '$lib/ipc/types';
   import {
@@ -16,12 +21,43 @@
     /** Row element to position against; `null` renders without positioning (tests).
      *  Named `anchorEl` because `anchor` collides with a testing-library mount option. */
     anchorEl: HTMLElement | null;
+    /** The pointer moved into the popover: it must stay open so it can be scrolled (4.9). */
+    onPointerEnter?: () => void;
+    /** The pointer left the popover. */
+    onPointerLeave?: () => void;
+    /** Wrap long lines instead of scrolling sideways (4.11, 4.12). */
+    wrap: boolean;
   }
 
-  let { load, anchorEl }: Props = $props();
+  let { load, anchorEl, onPointerEnter, onPointerLeave, wrap }: Props = $props();
 
   let preview: TransferPreview | null = $state(null);
   let box: HTMLDivElement | undefined = $state();
+  /** True between mousedown inside the popover and the following mouseup: a resize drag takes
+   *  the pointer outside the box, which must not dismiss it (4.10). */
+  let dragging = false;
+  let pointerInside = false;
+
+  function onMouseEnter(): void {
+    pointerInside = true;
+    onPointerEnter?.();
+  }
+
+  function onMouseLeave(): void {
+    pointerInside = false;
+    if (!dragging) onPointerLeave?.();
+  }
+
+  function onMouseDown(): void {
+    dragging = true;
+    onPointerEnter?.();
+    const end = (): void => {
+      dragging = false;
+      window.removeEventListener('mouseup', end);
+      if (!pointerInside) onPointerLeave?.();
+    };
+    window.addEventListener('mouseup', end);
+  }
 
   /**
    * Tokens grouped into display lines: a newline token ends its line but stays visible, so the
@@ -54,6 +90,39 @@
     };
   });
 
+  /** Comfortable starting size when the reader has not resized the popover yet. */
+  const DEFAULT_MAX_WIDTH_PX = 640;
+  const MARGIN_PX = 16;
+
+  /** Apply the remembered size, or a content-sized one, and remember later user resizes (4.10). */
+  $effect(() => {
+    const element = box;
+    if (!element) return;
+
+    const applied = rememberedSize ?? {
+      width: Math.min(element.scrollWidth + 2, DEFAULT_MAX_WIDTH_PX, window.innerWidth - MARGIN_PX),
+      height: Math.min(
+        element.scrollHeight + 2,
+        window.innerHeight / 2,
+        window.innerHeight - MARGIN_PX,
+      ),
+    };
+    element.style.width = `${applied.width}px`;
+    element.style.height = `${applied.height}px`;
+
+    if (typeof ResizeObserver === 'undefined') return;
+    // Ignore the size we just set; only a drag by the reader is worth remembering.
+    let lastSeen = applied;
+    const observer = new ResizeObserver(() => {
+      const current = { width: element.offsetWidth, height: element.offsetHeight };
+      if (current.width === lastSeen.width && current.height === lastSeen.height) return;
+      lastSeen = current;
+      rememberedSize = current;
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  });
+
   /** Keep the popover inside the window, preferring just below the row. */
   $effect(() => {
     if (!box || !anchorEl) return;
@@ -75,11 +144,21 @@
 </script>
 
 {#if preview}
-  <div class="pv" bind:this={box} role="tooltip">
+  <!-- The popover has no keyboard role of its own: it mirrors the hovered row and is closed by
+       moving the pointer away. The listeners only keep it open while it is being read or resized. -->
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <div
+    class="pv"
+    bind:this={box}
+    role="tooltip"
+    onmouseenter={onMouseEnter}
+    onmouseleave={onMouseLeave}
+    onmousedown={onMouseDown}
+  >
     {#if preview.text === ''}
       <p class="pv-empty">{$t('preview.empty')}</p>
     {:else}
-      <div class="pv-body">
+      <div class="pv-body" class:wrap>
         {#each rendered.lines as line, i (i)}
           <div class="pv-line">
             {#each line as token, j (j)}
@@ -124,8 +203,9 @@
   .pv {
     position: fixed;
     z-index: 10;
-    max-width: min(40em, 90vw);
-    max-height: 50vh;
+    /* The drag limit is the screen; the comfortable starting size is set in script. */
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
     overflow: auto;
     padding: 0.4em 0.6em;
     border-radius: 6px;
@@ -133,14 +213,24 @@
     background: Canvas;
     color: CanvasText;
     box-shadow: 0 6px 24px rgb(0 0 0 / 35%);
+    /* The reader can enlarge the box for long content (4.10). */
+    resize: both;
+    min-width: 12em;
+    min-height: 4em;
     font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
     font-size: 0.85em;
     line-height: 1.5;
     user-select: none;
-    pointer-events: none;
+    /* Interactive so its scrollbars can be used; the row keeps it open while hovered (4.9). */
+    pointer-events: auto;
   }
   .pv-body {
     white-space: pre;
+  }
+  /* Wrapping keeps everything inside the width; without it the box scrolls sideways. */
+  .pv-body.wrap {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
   .pv-line {
     min-height: 1.5em;

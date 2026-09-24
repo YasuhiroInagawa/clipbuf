@@ -14,6 +14,7 @@ use crate::settings::SettingsStore;
 #[derive(Debug, PartialEq, Eq)]
 enum Sunk {
     Item(ItemDto),
+    Items(Vec<ItemDto>),
     Status(CaptureStatus),
 }
 
@@ -23,7 +24,9 @@ impl EventSink for RecordingSink {
     fn item_added(&self, item: ItemDto) {
         let _ = self.0.lock().unwrap().send(Sunk::Item(item));
     }
-    fn items_changed(&self, _items: Vec<ItemDto>) {}
+    fn items_changed(&self, items: Vec<ItemDto>) {
+        let _ = self.0.lock().unwrap().send(Sunk::Items(items));
+    }
     fn settings_changed(&self, _settings: Settings) {}
     fn window_shown(&self) {}
     fn capture_status(&self, status: CaptureStatus) {
@@ -233,4 +236,42 @@ fn service_keeps_capturing_regardless_of_window_visibility() {
         );
     }
     assert_eq!(state.buffer.lock().unwrap().len(), 3);
+}
+
+#[test]
+fn eviction_announces_the_trimmed_list_so_the_copy_cannot_exceed_the_capacity() {
+    let fake = Arc::new(FakeClipboard::new(CaptureCapability::Full));
+    let state = state_with(fake.clone());
+    let (sink, rx) = sink();
+    state.buffer.lock().unwrap().set_capacity(2);
+
+    for t in ["a", "b"] {
+        fake.push_change(text(t));
+        process_once(&state, sink.as_ref());
+        assert!(
+            matches!(
+                rx.recv_timeout(Duration::from_millis(200)),
+                Ok(Sunk::Item(_))
+            ),
+            "{t}"
+        );
+        no_events(&rx);
+    }
+
+    // The third item pushes "a" out: the frontend must be told the whole list, not just the
+    // new item, or its copy would grow past the capacity (2.2).
+    fake.push_change(text("c"));
+    process_once(&state, sink.as_ref());
+    assert!(matches!(
+        rx.recv_timeout(Duration::from_millis(200)),
+        Ok(Sunk::Item(_))
+    ));
+    let Sunk::Items(items) = rx.recv_timeout(Duration::from_millis(200)).unwrap() else {
+        panic!("expected the trimmed list")
+    };
+    assert_eq!(
+        items.iter().map(|i| i.text.as_str()).collect::<Vec<_>>(),
+        vec!["c", "b"]
+    );
+    no_events(&rx);
 }

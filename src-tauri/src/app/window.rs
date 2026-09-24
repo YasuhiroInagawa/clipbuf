@@ -122,6 +122,16 @@ pub fn open_settings(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
+/// Close the settings window after a successful save (9.7). Re-opening builds a fresh one,
+/// which reads the stored settings again.
+pub fn close_settings(app: &AppHandle) -> tauri::Result<()> {
+    SETTINGS_HIDDEN_WITH_MAIN.store(false, Ordering::SeqCst);
+    match settings_window(app) {
+        Some(window) => window.close(),
+        None => Ok(()),
+    }
+}
+
 const SETTINGS_SIZE: (f64, f64) = (480.0, 520.0);
 const GAP: f64 = 16.0;
 

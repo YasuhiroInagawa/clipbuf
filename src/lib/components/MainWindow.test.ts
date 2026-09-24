@@ -21,11 +21,12 @@ beforeAll(() => i18n.setLanguage('en'));
 const settings: Settings = {
   version: 1,
   capacity: 20,
-  hotkey: 'Alt+Shift+V',
+  hotkey: 'Alt+Shift+KeyV',
   tabWidth: 4,
   pollIntervalMs: 200,
   autostart: false,
   language: null,
+  previewWrap: true,
   transfer: {
     keepStyle: false,
     newline: 'keep',
@@ -227,6 +228,23 @@ describe('MainWindow — full-text preview', () => {
     const popover = await screen.findByRole('tooltip');
     expect(popover).toHaveTextContent('preview-of-2');
     expect(f.previews).toEqual([2]);
+  });
+
+  it('stays open while the pointer is inside it, so it can be scrolled (4.8, 4.9)', async () => {
+    const f = fake();
+    const { container } = await mount(f);
+    const row = container.querySelectorAll('.item')[0] as HTMLElement;
+    await fireEvent.mouseOver(row.querySelector('.preview')!);
+    const popover = await screen.findByRole('tooltip');
+    // Moving from the row into the popover must not dismiss it.
+    await fireEvent.mouseLeave(row);
+    await fireEvent.mouseEnter(popover);
+    await new Promise((r) => setTimeout(r, 250));
+    expect(screen.queryByRole('tooltip')).not.toBeNull();
+    expect(getComputedStyle(popover).pointerEvents).not.toBe('none');
+
+    await fireEvent.mouseLeave(popover);
+    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
   });
 
   it('closes the preview when the pointer leaves the row (4.8)', async () => {
