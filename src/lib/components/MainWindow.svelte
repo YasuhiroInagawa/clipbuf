@@ -1,17 +1,21 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { isAppError, type CaptureStatus, type ItemId, type TransferMode } from '$lib/ipc/types';
+  import type { UpdateApi } from '$lib/ipc/update';
   import type { MainContext } from '$lib/stores/context';
   import { t } from '$lib/stores/i18n';
   import ItemList from './ItemList.svelte';
   import Notice from './Notice.svelte';
   import TransferOptions from './TransferOptions.svelte';
+  import UpdatePrompt from './UpdatePrompt.svelte';
 
   interface Props {
     ctx: MainContext;
+    /** Omitted where there is no updater to talk to (tests, unpackaged runs) (13.6). */
+    updates?: UpdateApi;
   }
 
-  let { ctx }: Props = $props();
+  let { ctx, updates }: Props = $props();
   // The context is created once per window and never swapped, so reading it eagerly is intended.
   // svelte-ignore state_referenced_locally
   const { items, selection, settings, notices, api } = ctx;
@@ -121,6 +125,9 @@
 <svelte:window onkeydown={onKeydown} />
 
 <div class="main">
+  {#if updates}
+    <UpdatePrompt api={updates} />
+  {/if}
   <header class="header">
     <TransferOptions store={settings} {notices} />
   </header>

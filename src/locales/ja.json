@@ -52,9 +52,10 @@
   "settings.save": "保存",
   "settings.invalid": "範囲外の値です",
   "settings.saveFailed": "設定を保存できませんでした",
-  "update.available": "新しいバージョンがあります。",
+  "update.available": "バージョン {version} が利用できます。",
   "update.install": "更新する",
   "update.dismiss": "あとで",
+  "update.installed": "更新の準備ができました。",
   "update.restart": "再起動して更新を完了",
   "transfer.title": "転送オプション",
   "preview.empty": "（空のテキスト）",
@@ -84,5 +85,7 @@
   "transfer.tabsToSpaces.hint": "タブ 1 つを、設定画面で指定した個数の半角空白に置き換えます。",
   "transfer.fullwidthToSpace.hint": "全角空白（U+3000）を半角空白 1 つに置き換えます。",
   "settings.previewWrap": "プレビューで長い行を折り返す",
-  "settings.previewWrap.hint": "オフにすると 1 行を 1 行のまま表示し、横スクロールで読みます。"
+  "settings.previewWrap.hint": "オフにすると 1 行を 1 行のまま表示し、横スクロールで読みます。",
+  "update.installing": "ダウンロード中…",
+  "update.failed": "更新を適用できませんでした。"
 }

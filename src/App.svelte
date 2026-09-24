@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { createAppContext, createSettingsContext, syncLanguage } from '$lib/app';
+  import { updateApi } from '$lib/ipc/update';
   import { currentWindowLabel } from '$lib/ipc/window';
   import MainWindow from '$lib/components/MainWindow.svelte';
   import SettingsWindow from '$lib/components/SettingsWindow.svelte';
@@ -24,7 +25,7 @@
 </script>
 
 {#if main}
-  <MainWindow ctx={main} />
+  <MainWindow ctx={main} updates={updateApi} />
 {:else if settings}
   <SettingsWindow
     store={settings.store}

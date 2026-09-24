@@ -52,9 +52,10 @@
   "settings.save": "Save",
   "settings.invalid": "Value out of range",
   "settings.saveFailed": "Could not save settings",
-  "update.available": "A new version is available.",
+  "update.available": "Version {version} is available.",
   "update.install": "Update",
   "update.dismiss": "Not now",
+  "update.installed": "The update is ready.",
   "update.restart": "Restart to finish updating",
   "transfer.title": "Transfer options",
   "preview.empty": "(empty text)",
@@ -84,5 +85,7 @@
   "transfer.tabsToSpaces.hint": "Replaces each tab with the number of spaces set in Settings.",
   "transfer.fullwidthToSpace.hint": "Replaces each full-width space (U+3000) with a normal space.",
   "settings.previewWrap": "Wrap long lines in the preview",
-  "settings.previewWrap.hint": "Off shows each line as one line, scrolling sideways instead."
+  "settings.previewWrap.hint": "Off shows each line as one line, scrolling sideways instead.",
+  "update.installing": "Downloading…",
+  "update.failed": "The update could not be installed."
 }

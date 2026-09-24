@@ -350,4 +350,24 @@ describe('MainWindow — capture status and window-shown', () => {
     await fireEvent.click(screen.getByText(en['list.clear']));
     await waitFor(() => expect(f.cleared).toBe(1));
   });
+
+  it('shows the update banner when an updater is wired in (13.6)', async () => {
+    const f = fake();
+    render(MainWindow, {
+      ctx: f.ctx,
+      updates: {
+        check: async () => ({ version: '2.0.0', downloadAndInstall: async () => {} }),
+        relaunch: async () => {},
+      },
+    });
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      en['update.available'].replace('{version}', '2.0.0'),
+    );
+  });
+
+  it('says nothing about updates when no updater is wired in', async () => {
+    const f = fake();
+    await mount(f);
+    expect(screen.queryByRole('status')).toBeNull();
+  });
 });

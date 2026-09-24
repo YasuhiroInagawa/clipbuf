@@ -147,6 +147,35 @@ CI の 3 ジョブは `.github/workflows/ci.yml`。`#[cfg(target_os = "...")]` �
 - 位置と最大サイズは行ごとに JS で計算する（`max-width: 100vw` のような静的 CSS では、行の位置に応じた上限にできない）。ウィンドウ縮小時は記憶サイズも縮める
 - Web UI なのでポップオーバーはメインウィンドウの外に出せない。「画面いっぱい」は実現できない
 
+### 5.6 更新の通知と承諾フロー
+- updater は **Rust 側がネットワークを叩く**ので、WebView の CSP (`default-src 'self'`) の影響を受けない。フロントは `lib/ipc/update.ts` 経由でプラグインを呼ぶだけ
+- `relaunch()` は `@tauri-apps/plugin-process` 側なので、**Rust の `tauri-plugin-process` も足りていないと動かない**。権限も `updater:default` と `process:allow-restart` の両方が要る
+- `bundle.createUpdaterArtifacts: true` と `TAURI_SIGNING_PRIVATE_KEY` の両方が揃って初めて `.app.tar.gz` と `.sig` が出る。鍵が無いと**バンドルは出来たうえで最後に失敗**する
+- i18n で `{version}` を差し込む文言は、テストで生文字列を期待すると必ず落ちる。置換後の文字列で比較する
+- 同じ文言をメッセージとボタンの両方に使うと `findByText` が曖昧になる。「準備できました」（説明）と「再起動して更新を完了」（ボタン）に分けた
+- ネットワークは更新確認だけ（10.3, 10.4）という要件は、**ソースを走査するテスト**で固定した（`src/lib/ipc/update.test.ts`）。走査結果が空になって素通りしないよう、件数の下限も併せて検証する
+
+#### ローカル更新マニフェストでの確認手順
+更新エンドポイントはビルド時に埋め込まれるので、ローカル検証には**エンドポイントを差し替えたビルド**が要る。
+
+```bash
+# 1. 配布物（更新ペイロード）を本番設定のまま署名付きでビルド
+TAURI_SIGNING_PRIVATE_KEY="$(cat ~/.clipbuf-keys/updater.key)" \
+  TAURI_SIGNING_PRIVATE_KEY_PASSWORD="" npm run tauri build -- --bundles app
+# → target/release/bundle/macos/clipbuf.app.tar.gz{,.sig}
+
+# 2. tar.gz / sig / latest.json を 1 つのディレクトリに置いて配信
+python3 -m http.server 8787
+
+# 3. tauri.conf.json の endpoints を http://localhost:8787/latest.json にし、
+#    "dangerousInsecureTransportProtocol": true を足して再ビルド（= 導入済みアプリ役）
+#    確認が済んだら設定を戻す
+```
+
+`latest.json` は `version`（現行より新しい値）、`platforms.darwin-aarch64.{signature,url}` を持つ JSON。
+`signature` は `.sig` ファイルの中身をそのまま入れる。ペイロード側の中身のバージョンは見られないので、
+同じビルドを「新しいバージョン」として配っても検証になる。
+
 ## 次回の再開手順（5.6 更新フローから）
 
 1. アプリ起動（ユーザー側のターミナルで）
