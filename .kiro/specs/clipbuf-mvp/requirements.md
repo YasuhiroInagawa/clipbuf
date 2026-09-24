@@ -64,15 +64,20 @@ clipbuf は、デスクトップ（Windows / macOS / Linux）でアプリ間の�
 4. The clipbuf shall 半角空白・全角空白・タブ・改行・NBSP・ゼロ幅スペース等の不可視文字を、それぞれ区別できる記号と色で表示する
 5. The clipbuf shall 全角空白を半角空白と異なる記号または色で表示する
 6. The clipbuf shall 行の幅に収まる範囲でテキストの先頭から可能な限り多くの文字を表示する
+7. The clipbuf shall CRLF・LF・CR を互いに区別できる色で表示し、どの改行かを説明で示す
 
-### Requirement 4: 項目テキストの閲覧（読み取り専用スクロール）
-**Objective:** As a ユーザー, I want 1 行に収まらない長いテキストも横にスクロールして確認できること, so that 全文を見てから転送を判断できる
+### Requirement 4: 項目テキストの閲覧（読み取り専用スクロールと全文プレビュー）
+**Objective:** As a ユーザー, I want 1 行に収まらない長いテキストの全文を、転送されるままの姿で確認できること, so that 貼り付け先へ移る前にここで内容を正確に確かめられる
 
 #### Acceptance Criteria
 1. When 項目のテキストが行の幅に収まらない, the clipbuf shall その行を横スクロールして全文を閲覧できるようにする
 2. The clipbuf shall 項目のテキスト表示を編集不可とする
 3. The clipbuf shall 項目のテキスト表示上での文字列選択とコピーを許可しない
 4. When 横スクロールした項目からフォーカスが外れる, the clipbuf shall その項目のスクロール位置を先頭に戻す
+5. When ユーザーが項目のテキストにポインタを合わせる, the clipbuf shall その項目の全文プレビューを表示する
+6. The clipbuf shall 全文プレビューで、不可視文字の可視化を保ったまま改行位置で実際に改行して表示し、タブを 1 文字分の記号として表示する
+7. The clipbuf shall 全文プレビューに、その時点の転送オプションを適用した後の内容を表示する
+8. When ポインタが項目のテキストから外れる, the clipbuf shall 全文プレビューを閉じる
 
 ### Requirement 5: 警告ステータスの表示
 **Objective:** As a ユーザー, I want 貼り付け事故につながる特徴が一目で分かること, so that 無害化オプションを選ぶ判断ができる
@@ -95,7 +100,7 @@ clipbuf は、デスクトップ（Windows / macOS / Linux）でアプリ間の�
 1. When ユーザーが項目の行をクリックする, the clipbuf shall その時点の転送オプションを適用した内容をクリップボードへ書き込む
 2. When ユーザーがキーボードで項目を選択して Enter を押す, the clipbuf shall クリックと同じ転送を行う
 3. The clipbuf shall キーボードの上下操作でリスト内の選択項目を移動できるようにする
-4. When ユーザーが項目の行にポインタを合わせる, the clipbuf shall 「プレーンテキストで転送」と「元のまま転送」の代替アクションを表示する
+4. The clipbuf shall 各項目の行に「プレーンテキストで転送」と「元のまま転送」のボタンを常時表示し、警告アイコンと区別できる見た目にする
 5. When ユーザーが「プレーンテキストで転送」を選ぶ, the clipbuf shall 転送オプションの設定にかかわらず、書式を除いたテキスト本文のみを書き込む
 6. When ユーザーが「元のまま転送」を選ぶ, the clipbuf shall 転送オプションの設定にかかわらず、取り込んだ内容（テキスト本文と書式付きデータ）をそのまま書き込む
 7. When 転送が完了する, the clipbuf shall 転送した行を短時間ハイライトして完了を示す

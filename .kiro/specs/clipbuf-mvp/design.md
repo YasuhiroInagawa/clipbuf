@@ -206,6 +206,7 @@ clipbuf/
 │   │       ├── ItemRow.svelte          # 1 行：PreviewLine + WarningIcons + ホバーアクション
 │   │       ├── PreviewLine.svelte      # トークン描画、横スクロール、blur で先頭復帰
 │   │       ├── WarningIcons.svelte     # 警告アイコン列 + ツールチップ
+│   │       ├── FullTextPreview.svelte  # ホバー時の全文プレビュー（変換適用後、改行を反映）
 │   │       ├── Notice.svelte           # 一時通知（転送完了、変換未適用、失敗、取り込み不可）
 │   │       ├── UpdatePrompt.svelte     # 更新の通知と承諾
 │   │       └── SettingsWindow.svelte   # 設定フォーム
@@ -326,10 +327,15 @@ flowchart TD
 | 3.4 | 不可視文字の記号・色 | charset, tokenize, PreviewLine | PreviewToken.kind | — |
 | 3.5 | 全角空白を区別 | charset, tokenize | PreviewToken.kind = fullwidthSpace | — |
 | 3.6 | 幅内で最大文字数 | PreviewLine（overflow hidden、上限 20,000） | — | — |
+| 3.7 | CRLF/LF/CR を色で区別 | charset, tokenize, PreviewLine, FullTextPreview | PreviewToken.value | — |
 | 4.1 | 横スクロール | PreviewLine | — | — |
 | 4.2 | 編集不可 | PreviewLine（非 contenteditable） | — | — |
 | 4.3 | 選択・コピー不可 | PreviewLine（user-select none, copy 抑止） | — | — |
 | 4.4 | フォーカス喪失で先頭へ | PreviewLine（blur / focusout ハンドラ） | — | — |
+| 4.5 | ホバーで全文プレビュー | ItemRow, FullTextPreview | preview_transfer | 全文プレビュー |
+| 4.6 | 可視化を保ち改行を反映 | FullTextPreview, tokenize | PreviewToken | 全文プレビュー |
+| 4.7 | 転送オプション適用後を表示 | commands.preview_transfer, ops::resolve_transfer | TransferPreview | 全文プレビュー |
+| 4.8 | ポインタが外れたら閉じる | ItemRow, FullTextPreview | — | 全文プレビュー |
 | 5.1 | スタイルあり | analysis（has_style） | Warning::HasStyle | — |
 | 5.2 | 先頭末尾の空白・改行 | analysis::edge | Warning::EdgeWhitespace | — |
 | 5.3 | タブあり | analysis | Warning::HasTab | — |
@@ -342,7 +348,7 @@ flowchart TD
 | 6.1 | クリックで転送 | ItemRow, commands.transfer_item | transfer_item(mode Options) | 転送 |
 | 6.2 | Enter で転送 | MainWindow キーハンドラ | transfer_item | 転送 |
 | 6.3 | 上下で選択移動 | selection store, MainWindow | — | — |
-| 6.4 | ホバー代替アクション | ItemRow | — | — |
+| 6.4 | 代替アクションを常時表示 | ItemRow | — | — |
 | 6.5 | プレーンで転送 | commands.transfer_item | mode Plain | 転送 |
 | 6.6 | 元のまま転送 | commands.transfer_item | mode Raw | 転送 |
 | 6.7 | 完了ハイライト | ItemRow, Notice | TransferOutcome | 転送 |
@@ -707,6 +713,7 @@ pub struct SettingsDiff { pub capacity: bool, pub hotkey: bool, pub autostart: b
 |---------|---------|----------|--------|
 | `list_items` | — | `Vec<ItemDto>`（新しい順） | — |
 | `transfer_item` | `{ id: ItemId, mode: TransferMode }` | `TransferOutcome` | `ItemNotFound`, `WriteFailed` |
+| `preview_transfer` | `{ id: ItemId }` | `TransferPreview { text, skippedTransforms }` | `ItemNotFound` |
 | `remove_item` | `{ id: ItemId }` | `()` | `ItemNotFound` |
 | `clear_items` | — | `()` | — |
 | `get_settings` | — | `Settings` | — |
@@ -714,6 +721,8 @@ pub struct SettingsDiff { pub capacity: bool, pub hotkey: bool, pub autostart: b
 | `get_platform_info` | — | `PlatformInfo { os, display_server, capture: CaptureCapability }` | — |
 | `hide_window` | — | `()` | — |
 
+- 転送内容の決定は `ops::resolve_transfer(item, settings, mode)` に集約し、`transfer_item`（書き込む）と
+  `preview_transfer`（書き込まずテキストだけ返す）が共有する。これによりプレビューは「実際に転送される内容」と一致する（4.7）
 - `transfer_item` の分岐（転送フロー参照）:
   - `Options` かつ `keep_style` かつ `item.has_style()` かつ `has_text_transform()` → 元のまま書き込み、`skipped_transforms: true`
   - `Options` → `transform::apply` の結果を text に、`keep_style && has_style` なら html/rtf も書く
@@ -804,9 +813,10 @@ export function tokenize(text: string): { tokens: PreviewToken[]; truncated: boo
 #### components（Summary-only）
 
 - `MainWindow`: グローバルキー（↑↓ 選択、Enter = options 転送、Shift+Enter = plain 転送、Delete = 削除、Escape = `hideWindow`）。`Notice` と `UpdatePrompt` を配置。`capture-status` を受けて取り込み不可 / 限定 / 拒否の通知を出す
-- `TransferOptions`: 5 つのトグル（keepStyle、newline の 3 択、trim、tabsToSpaces、fullwidthToSpace）。`keepStyle` が有効なとき他のトグルを「書式付き項目には適用されない」旨のヒント付きで表示（無効化はしない：書式なし項目には適用されるため 7.6）
-- `ItemRow`: クリックで `transferItem(id, 'options')`、ホバーで「プレーンで転送」「元のまま転送」ボタン、転送成功で 600ms のハイライト、`skippedTransforms` なら `Notice` へ通知
-- `PreviewLine`: `tokenize` の結果を `<span class={kind}>` で描画。`overflow-x: auto; white-space: nowrap; user-select: none`、`copy` イベントを `preventDefault`、`tabindex="0"`、`focusout` で `scrollLeft = 0`。行全体の高さは 1 行固定
+- `TransferOptions`: 書式（保持 / 削除のラジオ）、改行（そのまま / 削除 / 空白のラジオ）、トリム、タブ変換、全角空白変換。グループ間に区切り線を置く。`keepStyle` が有効なとき他のトグルを「書式付き項目には適用されない」旨のヒント付きで表示（無効化はしない：書式なし項目には適用されるため 7.6）
+- `ItemRow`: クリックで `transferItem(id, 'options')`、「プレーン」「原文」ボタンを常時表示（警告アイコンと区別できるボタン様の見た目）、転送成功で 600ms のハイライト、`skippedTransforms` なら `Notice` へ通知。テキストへのホバーで `FullTextPreview` を開き、離れると閉じる（4.5, 4.8）
+- `FullTextPreview`: `preview_transfer` の結果を `tokenize` し、改行トークンで実際に行を分けて描画する。タブは 1 文字分の記号。可視化とスクロールは `PreviewLine` と同じ規則。ポップオーバーは行の近くに出し、画面外にはみ出さないよう位置を補正する
+- `PreviewLine`: `tokenize` の結果を `<span class={kind}>` で描画。改行は値（`\r\n` / `\n` / `\r`）で色を分ける（3.7）。`overflow-x: auto; white-space: nowrap; user-select: none`、`copy` イベントを `preventDefault`、`tabindex="0"`、`focusout` で `scrollLeft = 0`。行全体の高さは 1 行固定
 - `WarningIcons`: `warnings` に含まれるものだけを固定順で描画。`title` に i18n の説明（5.8）
 - `Notice`: 種別（success / info / error）と自動消去
 - `UpdatePrompt`: 起動時に `check()`、更新があればバナー表示。承諾で `downloadAndInstall()` → 再起動確認。拒否でバナーを閉じる（13.6–13.8）
