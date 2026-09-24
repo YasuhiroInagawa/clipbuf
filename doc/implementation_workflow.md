@@ -151,6 +151,8 @@ CI の 3 ジョブは `.github/workflows/ci.yml`。`#[cfg(target_os = "...")]` �
 - updater は **Rust 側がネットワークを叩く**ので、WebView の CSP (`default-src 'self'`) の影響を受けない。フロントは `lib/ipc/update.ts` 経由でプラグインを呼ぶだけ
 - `relaunch()` は `@tauri-apps/plugin-process` 側なので、**Rust の `tauri-plugin-process` も足りていないと動かない**。権限も `updater:default` と `process:allow-restart` の両方が要る
 - `bundle.createUpdaterArtifacts: true` と `TAURI_SIGNING_PRIVATE_KEY` の両方が揃って初めて `.app.tar.gz` と `.sig` が出る。鍵が無いと**バンドルは出来たうえで最後に失敗**する
+- `require_signed_version: true` を入れておく。既定は `false` で、その場合は**バージョンを記録していない古い署名を出すだけで照合を回避できる**（プラグイン側のコメントに明記されている）。未リリースの今なら入れ得
+- macOS のインストールは「一時ディレクトリへ展開 → 旧 .app を退避 → 展開結果を rename」なので、失敗しても**ダウンロードだけ成功して .app が変わらない**という見え方になる。バンドルの mtime と `Info.plist` のバージョンで判別できる
 - i18n で `{version}` を差し込む文言は、テストで生文字列を期待すると必ず落ちる。置換後の文字列で比較する
 - 同じ文言をメッセージとボタンの両方に使うと `findByText` が曖昧になる。「準備できました」（説明）と「再起動して更新を完了」（ボタン）に分けた
 - ネットワークは更新確認だけ（10.3, 10.4）という要件は、**ソースを走査するテスト**で固定した（`src/lib/ipc/update.test.ts`）。走査結果が空になって素通りしないよう、件数の下限も併せて検証する
@@ -173,8 +175,14 @@ python3 -m http.server 8787
 ```
 
 `latest.json` は `version`（現行より新しい値）、`platforms.darwin-aarch64.{signature,url}` を持つ JSON。
-`signature` は `.sig` ファイルの中身をそのまま入れる。ペイロード側の中身のバージョンは見られないので、
-同じビルドを「新しいバージョン」として配っても検証になる。
+`signature` は `.sig` ファイルの中身をそのまま入れる。
+
+**ペイロードは必ずその新バージョンとしてビルドし直す。** 署名の trusted comment には
+`version:0.1.1` が記録されていて、updater は**マニフェストが名乗ったバージョンと一致するか検証する**
+（`require_signed_version: true`）。同じビルドを別バージョンとして配ると、ダウンロードまでは成功して
+`SignedVersionMismatch` でインストール前に失敗する。マニフェストは署名されていないので、この照合が
+「新しいバージョン番号に古い配布物を貼り付ける」改竄を防いでいる。最初この仕組みを知らずに
+0.1.0 のビルドを 0.1.1 として配り、ダウンロードだけ走ってインストールされない状態を作ってしまった
 
 ## 次回の再開手順（5.6 更新フローから）
 
