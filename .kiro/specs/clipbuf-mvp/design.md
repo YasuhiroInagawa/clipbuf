@@ -328,6 +328,8 @@ flowchart TD
 | 3.5 | 全角空白を区別 | charset, tokenize | PreviewToken.kind = fullwidthSpace | — |
 | 3.6 | 幅内で最大文字数 | PreviewLine（overflow hidden、上限 20,000） | — | — |
 | 3.7 | CRLF/LF/CR を色で区別 | charset, tokenize, PreviewLine, FullTextPreview | PreviewToken.value | — |
+| 3.8 | 改行記号のホバーで種別表示 | PreviewLine, FullTextPreview（title） | tokenLabel | — |
+| 3.9 | プレビューに改行種別の凡例 | FullTextPreview | newlineKind | — |
 | 4.1 | 横スクロール | PreviewLine | — | — |
 | 4.2 | 編集不可 | PreviewLine（非 contenteditable） | — | — |
 | 4.3 | 選択・コピー不可 | PreviewLine（user-select none, copy 抑止） | — | — |
@@ -341,14 +343,16 @@ flowchart TD
 | 5.3 | タブあり | analysis | Warning::HasTab | — |
 | 5.4 | 機種依存文字 | analysis::platform_dependent | Warning::PlatformDependent | — |
 | 5.5 | 制御文字・不正データ | analysis::control | Warning::ControlOrBinary | — |
-| 5.6 | 改行コード混在 | analysis::newline | Warning::MixedNewlines | — |
+| 5.6 | 改行コード混在 + 種別の説明 | analysis::newline（判定）, charset.newlineKindsIn（表示用の内訳）, WarningIcons | Warning::MixedNewlines | — |
 | 5.7 | BOM・双方向制御・NFC/NFD 混在 | analysis::encoding_notice | Warning::EncodingNotice | — |
 | 5.8 | 警告の説明表示 | WarningIcons（title / tooltip, i18n） | — | — |
 | 5.9 | 非該当は非表示 | WarningIcons | ItemDto.warnings | — |
 | 6.1 | クリックで転送 | ItemRow, commands.transfer_item | transfer_item(mode Options) | 転送 |
 | 6.2 | Enter で転送 | MainWindow キーハンドラ | transfer_item | 転送 |
 | 6.3 | 上下で選択移動 | selection store, MainWindow | — | — |
-| 6.4 | 代替アクションを常時表示 | ItemRow | — | — |
+| 6.4 | プレーン転送ボタンを常時表示 | ItemRow | — | — |
+| 6.4.1 | 原文転送は書式あり行のみ | ItemRow（`item.hasStyle`） | ItemDto.hasStyle | — |
+| 6.6.1 | 変換非適用を説明に明示 | ItemRow（title）, locales | — | — |
 | 6.5 | プレーンで転送 | commands.transfer_item | mode Plain | 転送 |
 | 6.6 | 元のまま転送 | commands.transfer_item | mode Raw | 転送 |
 | 6.7 | 完了ハイライト | ItemRow, Notice | TransferOutcome | 転送 |
@@ -814,8 +818,8 @@ export function tokenize(text: string): { tokens: PreviewToken[]; truncated: boo
 
 - `MainWindow`: グローバルキー（↑↓ 選択、Enter = options 転送、Shift+Enter = plain 転送、Delete = 削除、Escape = `hideWindow`）。`Notice` と `UpdatePrompt` を配置。`capture-status` を受けて取り込み不可 / 限定 / 拒否の通知を出す
 - `TransferOptions`: 書式（保持 / 削除のラジオ）、改行（そのまま / 削除 / 空白のラジオ）、トリム、タブ変換、全角空白変換。グループ間に区切り線を置く。`keepStyle` が有効なとき他のトグルを「書式付き項目には適用されない」旨のヒント付きで表示（無効化はしない：書式なし項目には適用されるため 7.6）
-- `ItemRow`: クリックで `transferItem(id, 'options')`、「プレーン」「原文」ボタンを常時表示（警告アイコンと区別できるボタン様の見た目）、転送成功で 600ms のハイライト、`skippedTransforms` なら `Notice` へ通知。テキストへのホバーで `FullTextPreview` を開き、離れると閉じる（4.5, 4.8）
-- `FullTextPreview`: `preview_transfer` の結果を `tokenize` し、改行トークンで実際に行を分けて描画する。タブは 1 文字分の記号。可視化とスクロールは `PreviewLine` と同じ規則。ポップオーバーは行の近くに出し、画面外にはみ出さないよう位置を補正する
+- `ItemRow`: クリックで `transferItem(id, 'options')`、「プレーン」ボタンを常時表示し、「原文」は書式付きの項目にだけ表示する（書式なしの項目では行クリックと結果が変わらず、ボタンの意味が伝わらないため）。どちらも警告アイコンと区別できるボタン様の見た目で、説明にテキスト変換が適用されないことを明記する。転送成功で 600ms のハイライト、`skippedTransforms` なら `Notice` へ通知。テキストへのホバーで `FullTextPreview` を開き、離れると閉じる（4.5, 4.8）
+- `FullTextPreview`: `preview_transfer` の結果を `tokenize` し、改行トークンで実際に行を分けて描画する。本文に含まれる改行種別の凡例（色見本 + CRLF/LF/CR）を下部に並べる（3.9）。タブは 1 文字分の記号。可視化とスクロールは `PreviewLine` と同じ規則。ポップオーバーは行の近くに出し、画面外にはみ出さないよう位置を補正する
 - `PreviewLine`: `tokenize` の結果を `<span class={kind}>` で描画。改行は値（`\r\n` / `\n` / `\r`）で色を分ける（3.7）。`overflow-x: auto; white-space: nowrap; user-select: none`、`copy` イベントを `preventDefault`、`tabindex="0"`、`focusout` で `scrollLeft = 0`。行全体の高さは 1 行固定
 - `WarningIcons`: `warnings` に含まれるものだけを固定順で描画。`title` に i18n の説明（5.8）
 - `Notice`: 種別（success / info / error）と自動消去

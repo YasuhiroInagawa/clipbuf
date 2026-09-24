@@ -13,6 +13,7 @@ use super::platform;
 use super::state::AppState;
 use crate::model::{
     AppError, ItemDto, ItemId, PlatformInfo, Settings, TransferMode, TransferOutcome,
+    TransferPreview,
 };
 
 pub type SharedState = Arc<AppState>;
@@ -29,6 +30,14 @@ pub fn transfer_item(
     mode: TransferMode,
 ) -> Result<TransferOutcome, AppError> {
     ops::transfer_item(&state, id, mode)
+}
+
+#[tauri::command]
+pub fn preview_transfer(
+    state: State<'_, SharedState>,
+    id: ItemId,
+) -> Result<TransferPreview, AppError> {
+    ops::preview_transfer(&state, id)
 }
 
 #[tauri::command]

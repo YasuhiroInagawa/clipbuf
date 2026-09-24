@@ -46,6 +46,7 @@ const dto = (id: number, text: string, warnings: ItemDto['warnings'] = []): Item
 interface Fake {
   ctx: MainContext;
   transfers: [number, TransferMode][];
+  previews: number[];
   removed: number[];
   hidden: number;
   cleared: number;
@@ -63,6 +64,7 @@ function fake(
 ): Fake {
   const items = opts.items ?? [dto(3, 'third\tx', ['hasTab']), dto(2, 'second'), dto(1, 'first')];
   const transfers: [number, TransferMode][] = [];
+  const previews: number[] = [];
   const removed: number[] = [];
   let captureCb: ((s: CaptureStatus) => void) | null = null;
   let shownCb: (() => void) | null = null;
@@ -78,6 +80,10 @@ function fake(
       transfers.push([id, mode]);
       if (opts.reject) throw opts.reject;
       return opts.outcome ?? { skippedTransforms: false };
+    },
+    previewTransfer: async (id) => {
+      previews.push(id);
+      return { text: `preview-of-${id}`, skippedTransforms: false };
     },
     removeItem: async (id) => {
       removed.push(id);
@@ -103,6 +109,7 @@ function fake(
   return {
     ctx,
     transfers,
+    previews,
     removed,
     get hidden() {
       return state.hidden;
@@ -115,9 +122,9 @@ function fake(
   };
 }
 
-async function mount(f: Fake) {
+async function mount(f: Fake, expectedRows = 3) {
   const utils = render(MainWindow, { ctx: f.ctx });
-  await waitFor(() => expect(utils.container.querySelectorAll('.item')).toHaveLength(3));
+  await waitFor(() => expect(utils.container.querySelectorAll('.item')).toHaveLength(expectedRows));
   return utils;
 }
 
@@ -153,8 +160,37 @@ describe('MainWindow — transfer', () => {
     expect(get(f.ctx.selection.selectedId)).toBe(2);
   });
 
-  it('hover buttons transfer plain / raw without triggering the row click (6.4, 6.5, 6.6)', async () => {
+  it('shows a labelled plain button on every row without hovering (6.4)', async () => {
     const f = fake();
+    const { container } = await mount(f);
+    for (const row of container.querySelectorAll('.item')) {
+      const plain = row.querySelector('button[data-mode="plain"]') as HTMLElement;
+      expect(plain).toBeVisible();
+      expect(plain).toHaveTextContent(en['list.plainShort']);
+      expect(plain).toHaveAttribute('title', en['list.transferPlain']);
+      expect(en['list.transferPlain']).toContain('no text transforms');
+    }
+  });
+
+  it('offers the raw button only on items that carry formatting (6.4.1)', async () => {
+    const f = fake({
+      items: [dto(2, 'styled', ['hasStyle']), dto(1, 'plain text')],
+    });
+    const { container } = await mount(f, 2);
+    const [styledRow, plainRow] = container.querySelectorAll('.item');
+    const raw = styledRow.querySelector('button[data-mode="raw"]') as HTMLElement;
+    expect(raw).toBeVisible();
+    expect(raw).toHaveTextContent(en['list.rawShort']);
+    expect(raw).toHaveAttribute('title', en['list.transferRaw']);
+    expect(en['list.transferRaw']).toContain('no text transforms');
+    expect(plainRow.querySelector('button[data-mode="raw"]')).toBeNull();
+    expect(plainRow.querySelector('button[data-mode="plain"]')).not.toBeNull();
+  });
+
+  it('the buttons transfer plain / raw without triggering the row click (6.5, 6.6)', async () => {
+    const f = fake({
+      items: [dto(3, 'third\tx', ['hasStyle']), dto(2, 'second'), dto(1, 'first')],
+    });
     const { container } = await mount(f);
     const row = container.querySelectorAll('.item')[0];
     await fireEvent.click(row.querySelector('button[data-mode="plain"]')!);
@@ -179,6 +215,28 @@ describe('MainWindow — transfer', () => {
     const { container } = await mount(f);
     await fireEvent.click(container.querySelector('.item .preview')!);
     expect(await screen.findByRole('alert')).toHaveTextContent(en['notice.writeFailed']);
+  });
+});
+
+describe('MainWindow — full-text preview', () => {
+  it('opens the preview with the transferred text when the pointer enters the text (4.5, 4.7)', async () => {
+    const f = fake();
+    const { container } = await mount(f);
+    const preview = container.querySelectorAll('.item .preview')[1] as HTMLElement;
+    await fireEvent.mouseOver(preview);
+    const popover = await screen.findByRole('tooltip');
+    expect(popover).toHaveTextContent('preview-of-2');
+    expect(f.previews).toEqual([2]);
+  });
+
+  it('closes the preview when the pointer leaves the row (4.8)', async () => {
+    const f = fake();
+    const { container } = await mount(f);
+    const row = container.querySelectorAll('.item')[0] as HTMLElement;
+    await fireEvent.mouseOver(row.querySelector('.preview')!);
+    await screen.findByRole('tooltip');
+    await fireEvent.mouseLeave(row);
+    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
   });
 });
 

@@ -15,12 +15,14 @@ import type {
   Settings,
   TransferMode,
   TransferOutcome,
+  TransferPreview,
 } from './types';
 
 export const commands = {
   listItems: (): Promise<ItemDto[]> => invoke('list_items'),
   transferItem: (id: ItemId, mode: TransferMode): Promise<TransferOutcome> =>
     invoke('transfer_item', { id, mode }),
+  previewTransfer: (id: ItemId): Promise<TransferPreview> => invoke('preview_transfer', { id }),
   removeItem: (id: ItemId): Promise<void> => invoke('remove_item', { id }),
   clearItems: (): Promise<void> => invoke('clear_items'),
   getSettings: (): Promise<Settings> => invoke('get_settings'),

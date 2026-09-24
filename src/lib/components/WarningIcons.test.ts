@@ -29,6 +29,23 @@ describe('WarningIcons', () => {
     expect(icon).toHaveAttribute('title', en['warning.platformDependent.hint']);
   });
 
+  it('names the newline kinds actually present in the mixed-newlines hint (5.6)', () => {
+    render(WarningIcons, { warnings: ['mixedNewlines'], newlineKinds: ['crlf', 'lf'] });
+    const icon = screen.getByLabelText(en['warning.mixedNewlines']);
+    expect(icon).toHaveAttribute(
+      'title',
+      en['warning.mixedNewlines.hintWith'].replace('{kinds}', 'CRLF, LF'),
+    );
+  });
+
+  it('falls back to the generic hint when the kinds are unknown', () => {
+    render(WarningIcons, { warnings: ['mixedNewlines'] });
+    expect(screen.getByLabelText(en['warning.mixedNewlines'])).toHaveAttribute(
+      'title',
+      en['warning.mixedNewlines.hint'],
+    );
+  });
+
   it('switches text when the language changes', async () => {
     i18n.setLanguage('ja');
     try {

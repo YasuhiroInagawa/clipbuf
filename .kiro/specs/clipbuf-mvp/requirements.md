@@ -64,7 +64,9 @@ clipbuf は、デスクトップ（Windows / macOS / Linux）でアプリ間の�
 4. The clipbuf shall 半角空白・全角空白・タブ・改行・NBSP・ゼロ幅スペース等の不可視文字を、それぞれ区別できる記号と色で表示する
 5. The clipbuf shall 全角空白を半角空白と異なる記号または色で表示する
 6. The clipbuf shall 行の幅に収まる範囲でテキストの先頭から可能な限り多くの文字を表示する
-7. The clipbuf shall CRLF・LF・CR を互いに区別できる色で表示し、どの改行かを説明で示す
+7. The clipbuf shall CRLF・LF・CR を互いに区別できる色で表示する
+8. When ユーザーが改行記号にポインタを合わせる, the clipbuf shall その改行の種別を説明で表示する
+9. The clipbuf shall 全文プレビューに、その項目に含まれる改行種別の凡例を色見本付きで表示する
 
 ### Requirement 4: 項目テキストの閲覧（読み取り専用スクロールと全文プレビュー）
 **Objective:** As a ユーザー, I want 1 行に収まらない長いテキストの全文を、転送されるままの姿で確認できること, so that 貼り付け先へ移る前にここで内容を正確に確かめられる
@@ -88,7 +90,7 @@ clipbuf は、デスクトップ（Windows / macOS / Linux）でアプリ間の�
 3. When 項目のテキストにタブ文字が含まれる, the clipbuf shall 「タブあり」の警告アイコンを表示する
 4. When 項目のテキストに機種依存文字（NEC / IBM 拡張文字など、JIS X 0208 の範囲外で環境により表示が変わる文字）が含まれる, the clipbuf shall 「機種依存文字あり」の警告アイコンを表示する
 5. When 項目のテキストにタブ・改行以外の制御文字、または不正なサロゲートペアが含まれる, the clipbuf shall 「バイナリ/制御文字あり」の警告アイコンを表示する
-6. When 項目のテキストに複数種類の改行コード（CRLF / LF / CR）が混在する, the clipbuf shall 「改行コード混在」の警告アイコンを表示する
+6. When 項目のテキストに複数種類の改行コード（CRLF / LF / CR）が混在する, the clipbuf shall 「改行コード混在」の警告アイコンを表示し、その説明に実際に含まれる改行種別を示す
 7. When 項目のテキストに BOM、双方向制御文字、または NFC と NFD の混在が含まれる, the clipbuf shall 「文字表現の注意」の警告アイコンを表示する
 8. When ユーザーが警告アイコンにポインタを合わせる, the clipbuf shall その警告の意味を示す説明を表示する
 9. When 項目が警告に該当しない, the clipbuf shall その警告のアイコンを表示しない
@@ -100,9 +102,11 @@ clipbuf は、デスクトップ（Windows / macOS / Linux）でアプリ間の�
 1. When ユーザーが項目の行をクリックする, the clipbuf shall その時点の転送オプションを適用した内容をクリップボードへ書き込む
 2. When ユーザーがキーボードで項目を選択して Enter を押す, the clipbuf shall クリックと同じ転送を行う
 3. The clipbuf shall キーボードの上下操作でリスト内の選択項目を移動できるようにする
-4. The clipbuf shall 各項目の行に「プレーンテキストで転送」と「元のまま転送」のボタンを常時表示し、警告アイコンと区別できる見た目にする
+4. The clipbuf shall 各項目の行に「プレーンテキストで転送」のボタンを常時表示し、警告アイコンと区別できる見た目にする
+4.1. Where 項目に書式付きデータが含まれる, the clipbuf shall その行にのみ「元のまま転送」のボタンを追加で表示する
 5. When ユーザーが「プレーンテキストで転送」を選ぶ, the clipbuf shall 転送オプションの設定にかかわらず、書式を除いたテキスト本文のみを書き込む
 6. When ユーザーが「元のまま転送」を選ぶ, the clipbuf shall 転送オプションの設定にかかわらず、取り込んだ内容（テキスト本文と書式付きデータ）をそのまま書き込む
+6.1. The clipbuf shall 「プレーンテキストで転送」と「元のまま転送」の説明に、テキスト変換が適用されないことを明示する
 7. When 転送が完了する, the clipbuf shall 転送した行を短時間ハイライトして完了を示す
 8. When 転送が完了する, the clipbuf shall ウィンドウの表示状態とリストの順序を変更しない
 9. The clipbuf shall 転送によってリスト上の元の項目のデータを変更しない

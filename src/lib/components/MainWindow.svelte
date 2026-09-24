@@ -129,7 +129,13 @@
   <div class="notice-slot">
     <Notice store={notices} />
   </div>
-  <ItemList items={items.items} {selection} {highlightId} onTransfer={transfer} />
+  <ItemList
+    items={items.items}
+    {selection}
+    {highlightId}
+    onTransfer={transfer}
+    loadPreview={(id) => api.previewTransfer(id)}
+  />
   <footer class="footer">
     <button type="button" class="clear" onclick={() => void api.clearItems()}>
       {$t('list.clear')}

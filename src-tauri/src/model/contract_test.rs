@@ -70,6 +70,9 @@ fn structs_round_trip() {
     assert_eq!(settings.language, Some(Language::En));
     let outcome: TransferOutcome = round_trip("transferOutcome");
     assert!(outcome.skipped_transforms);
+    let preview: TransferPreview = round_trip("transferPreview");
+    assert_eq!(preview.text, "a b");
+    assert!(!preview.skipped_transforms);
     let err: AppError = round_trip("appError");
     assert_eq!(err.kind, ErrorKind::HotkeyUnavailable);
     let info: PlatformInfo = round_trip("platformInfo");

@@ -1,12 +1,15 @@
 <script lang="ts">
   import { WARNINGS, type Warning } from '$lib/ipc/types';
+  import type { NewlineKind } from '$lib/preview/charset';
   import { t } from '$lib/stores/i18n';
 
   interface Props {
     warnings: Warning[];
+    /** Newline conventions in the item, to name them in the mixed-newlines hint (5.6). */
+    newlineKinds?: NewlineKind[];
   }
 
-  let { warnings }: Props = $props();
+  let { warnings, newlineKinds = [] }: Props = $props();
 
   /** Glyph per warning kind; the meaning is carried by aria-label / title. */
   const GLYPH: Record<Warning, string> = {
@@ -21,6 +24,17 @@
 
   // Fixed display order regardless of the order the backend sent (5.9 / design).
   const shown = $derived(WARNINGS.filter((w) => warnings.includes(w)));
+
+  /** Name the actual conventions when we know them, else the generic hint. */
+  function hint(warning: Warning): string {
+    if (warning === 'mixedNewlines' && newlineKinds.length > 0) {
+      return $t('warning.mixedNewlines.hintWith').replace(
+        '{kinds}',
+        newlineKinds.map((k) => k.toUpperCase()).join(', '),
+      );
+    }
+    return $t(`warning.${warning}.hint`);
+  }
 </script>
 
 <span class="warnings">
@@ -30,7 +44,7 @@
       data-warning={warning}
       role="img"
       aria-label={$t(`warning.${warning}`)}
-      title={$t(`warning.${warning}.hint`)}>{GLYPH[warning]}</span
+      title={hint(warning)}>{GLYPH[warning]}</span
     >
   {/each}
 </span>

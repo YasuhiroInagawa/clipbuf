@@ -47,15 +47,28 @@ async function setup(opts: { initial?: Settings; reject?: AppError } = {}) {
 }
 
 describe('TransferOptions', () => {
-  it('renders the five options from the store', async () => {
+  it('renders the options from the store, with formatting as a two-way radio', async () => {
     await setup();
-    expect(screen.getByLabelText(en['transfer.keepStyle'])).not.toBeChecked();
+    expect(screen.getByLabelText(en['transfer.style.keep'])).not.toBeChecked();
+    expect(screen.getByLabelText(en['transfer.style.strip'])).toBeChecked();
     expect(screen.getByLabelText(en['transfer.trim'])).not.toBeChecked();
     expect(screen.getByLabelText(en['transfer.tabsToSpaces'])).not.toBeChecked();
     expect(screen.getByLabelText(en['transfer.fullwidthToSpace'])).not.toBeChecked();
     expect(screen.getByLabelText(en['transfer.newline.keep'])).toBeChecked();
     expect(screen.getByLabelText(en['transfer.newline.remove'])).not.toBeChecked();
     expect(screen.getByLabelText(en['transfer.newline.space'])).not.toBeChecked();
+  });
+
+  it('separates the option groups visually (7.1)', async () => {
+    const { container } = await setup();
+    expect(container.querySelectorAll('.sep').length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('persists the formatting choice through the radio', async () => {
+    const { calls } = await setup();
+    await fireEvent.click(screen.getByLabelText(en['transfer.style.keep']));
+    await Promise.resolve();
+    expect(calls[0].transfer.keepStyle).toBe(true);
   });
 
   it('persists a checkbox change immediately through the store (7.3)', async () => {
@@ -80,6 +93,7 @@ describe('TransferOptions', () => {
       initial: { ...defaults, transfer: { ...defaults.transfer, keepStyle: true } },
     });
     expect(container.querySelector('.hint')).toHaveTextContent(en['transfer.keepStyle.hint']);
+    expect(screen.getByLabelText(en['transfer.style.keep'])).toBeChecked();
     const trim = screen.getByLabelText(en['transfer.trim']);
     expect(trim).not.toBeDisabled();
     expect(trim.closest('label')).toHaveAttribute('title', en['transfer.keepStyle.hint']);

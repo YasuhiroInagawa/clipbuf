@@ -12,7 +12,7 @@ mod settings;
 mod warning;
 
 pub use error::{AppError, ErrorKind};
-pub use item::{ClipItem, ClipboardSnapshot, ItemDto, ItemId, TransferOutcome};
+pub use item::{ClipItem, ClipboardSnapshot, ItemDto, ItemId, TransferOutcome, TransferPreview};
 pub use options::{NewlineMode, TransferMode, TransferOptions};
 pub use platform::{CaptureCapability, CaptureStatus, PlatformInfo};
 pub use settings::{

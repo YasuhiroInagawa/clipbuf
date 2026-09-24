@@ -14,6 +14,7 @@ import {
   type Settings,
   type TransferOptions,
   type TransferOutcome,
+  type TransferPreview,
 } from './types';
 
 // The fixture is the single source of truth shared with the Rust contract tests
@@ -101,10 +102,14 @@ describe('IPC type contract', () => {
     });
   });
 
-  it('matches TransferOutcome, AppError and PlatformInfo', () => {
+  it('matches TransferOutcome, TransferPreview, AppError and PlatformInfo', () => {
     const outcome = contract.transferOutcome as TransferOutcome;
     expect(keysOf(outcome)).toEqual(['skippedTransforms']);
     expect(typeof outcome.skippedTransforms).toBe('boolean');
+
+    const preview = contract.transferPreview as TransferPreview;
+    expect(keysOf(preview)).toEqual(['skippedTransforms', 'text']);
+    expect(typeof preview.text).toBe('string');
 
     expect(isAppError(contract.appError)).toBe(true);
     expect(ERROR_KINDS).toContain(contract.appError.kind);

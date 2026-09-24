@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { TOKEN_SYMBOL, type TokenKind } from '$lib/preview/charset';
+  import { TOKEN_SYMBOL, newlineKind, tokenKey } from '$lib/preview/charset';
   import { tokenize } from '$lib/preview/tokenize';
   import { t } from '$lib/stores/i18n';
 
@@ -11,18 +11,6 @@
   let line: HTMLDivElement | undefined = $state();
 
   const result = $derived(tokenize(text));
-
-  /** Accessible name for a non-text token. */
-  const LABEL: Record<Exclude<TokenKind, 'text'>, string> = {
-    space: 'space',
-    fullwidthSpace: 'full-width space',
-    tab: 'tab',
-    newline: 'line break',
-    nbsp: 'no-break space',
-    zeroWidth: 'zero-width character',
-    bidi: 'bidirectional control',
-    control: 'control character',
-  };
 
   function resetScroll(): void {
     if (line) line.scrollLeft = 0;
@@ -50,8 +38,12 @@
     {#if token.kind === 'text'}
       <span class="tok tok-text" data-kind="text">{token.value}</span>
     {:else}
-      <span class="tok tok-{token.kind}" data-kind={token.kind} aria-label={LABEL[token.kind]}
-        >{TOKEN_SYMBOL[token.kind]}</span
+      <span
+        class="tok tok-{token.kind}"
+        data-kind={token.kind}
+        data-newline={token.kind === 'newline' ? newlineKind(token.value) : undefined}
+        title={$t(tokenKey(token.kind, token.value))}
+        aria-label={$t(tokenKey(token.kind, token.value))}>{TOKEN_SYMBOL[token.kind]}</span
       >
     {/if}
   {/each}
@@ -107,9 +99,19 @@
     color: #fff;
     background: #2563eb;
   }
+  /* Newline conventions are told apart by colour (3.7). */
   .tok-newline {
     color: #fff;
     background: #7c3aed;
+  }
+  .tok-newline[data-newline='crlf'] {
+    background: #7c3aed;
+  }
+  .tok-newline[data-newline='lf'] {
+    background: #0d9488;
+  }
+  .tok-newline[data-newline='cr'] {
+    background: #db2777;
   }
   .tok-nbsp {
     color: #fff;

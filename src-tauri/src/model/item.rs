@@ -63,6 +63,16 @@ pub struct ItemDto {
     pub warnings: Vec<Warning>,
 }
 
+/// Result of `preview_transfer`: the text that a transfer would place on the clipboard,
+/// without touching it (4.7).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TransferPreview {
+    pub text: String,
+    /// Style is kept, so the enabled text transformations are not applied.
+    pub skipped_transforms: bool,
+}
+
 /// Result of `transfer_item` (6.7, 7.5).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

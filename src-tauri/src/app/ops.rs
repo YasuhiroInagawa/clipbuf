@@ -6,7 +6,9 @@ use super::events::EventSink;
 use super::hotkey::{HotkeyState, Registrar};
 use super::state::AppState;
 use crate::clipboard::WritePayload;
-use crate::model::{AppError, ErrorKind, ItemDto, ItemId, Settings, TransferMode, TransferOutcome};
+use crate::model::{
+    AppError, ErrorKind, ItemDto, ItemId, Settings, TransferMode, TransferOutcome, TransferPreview,
+};
 use crate::settings;
 use crate::transform;
 
@@ -19,6 +21,41 @@ pub fn list_items(state: &AppState) -> Vec<ItemDto> {
         .items()
         .map(|item| item.to_dto())
         .collect()
+}
+
+/// What a transfer would place on the clipboard for `item` under `settings` and `mode`.
+///
+/// Shared by `transfer_item` (which writes it) and `preview_transfer` (which only shows it),
+/// so the preview always matches what will actually be copied (4.7).
+fn resolve_transfer(
+    item: &crate::model::ClipItem,
+    settings: &Settings,
+    mode: TransferMode,
+) -> (String, Option<String>, Option<String>, bool) {
+    let options = &settings.transfer;
+    match mode {
+        TransferMode::Raw => (
+            item.text.clone(),
+            item.html.clone(),
+            item.rtf.clone(),
+            false,
+        ),
+        TransferMode::Plain => (item.text.clone(), None, None, false),
+        TransferMode::Options => {
+            let keep_style = options.keep_style && item.has_style();
+            if keep_style && options.has_text_transform() {
+                // Style wins; the transforms are not applied (7.5).
+                (item.text.clone(), item.html.clone(), item.rtf.clone(), true)
+            } else {
+                let text = transform::apply(&item.text, options, settings.tab_width);
+                if keep_style {
+                    (text, item.html.clone(), item.rtf.clone(), false)
+                } else {
+                    (text, None, None, false)
+                }
+            }
+        }
+    }
 }
 
 /// Write an item back to the clipboard (6.1, 6.5, 6.6, 7.2, 7.4–7.6).
@@ -35,30 +72,7 @@ pub fn transfer_item(
     let (text, html, rtf, skipped_transforms) = {
         let buffer = state.buffer.lock().expect("buffer lock");
         let item = buffer.get(id).ok_or(ErrorKind::ItemNotFound)?;
-        let options = &settings.transfer;
-        match mode {
-            TransferMode::Raw => (
-                item.text.clone(),
-                item.html.clone(),
-                item.rtf.clone(),
-                false,
-            ),
-            TransferMode::Plain => (item.text.clone(), None, None, false),
-            TransferMode::Options => {
-                let keep_style = options.keep_style && item.has_style();
-                if keep_style && options.has_text_transform() {
-                    // Style wins; the transforms are not applied (7.5).
-                    (item.text.clone(), item.html.clone(), item.rtf.clone(), true)
-                } else {
-                    let text = transform::apply(&item.text, options, settings.tab_width);
-                    if keep_style {
-                        (text, item.html.clone(), item.rtf.clone(), false)
-                    } else {
-                        (text, None, None, false)
-                    }
-                }
-            }
-        }
+        resolve_transfer(item, &settings, mode)
     };
 
     state
@@ -71,6 +85,19 @@ pub fn transfer_item(
         .map_err(|_| AppError::from(ErrorKind::WriteFailed))?;
     state.last_write.record(&text);
     Ok(TransferOutcome { skipped_transforms })
+}
+
+/// The text a click on this item would put on the clipboard, for the full-text preview (4.7).
+/// Reads nothing and writes nothing outside the buffer lock.
+pub fn preview_transfer(state: &AppState, id: ItemId) -> Result<TransferPreview, AppError> {
+    let settings = state.settings.get();
+    let buffer = state.buffer.lock().expect("buffer lock");
+    let item = buffer.get(id).ok_or(ErrorKind::ItemNotFound)?;
+    let (text, _, _, skipped_transforms) = resolve_transfer(item, &settings, TransferMode::Options);
+    Ok(TransferPreview {
+        text,
+        skipped_transforms,
+    })
 }
 
 /// Remove one item and announce the new list (2.3).

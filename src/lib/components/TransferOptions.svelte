@@ -26,14 +26,27 @@
 
 {#if transfer}
   <div class="options" role="group" aria-label={$t('transfer.title')}>
-    <label class="opt">
-      <input
-        type="checkbox"
-        checked={transfer.keepStyle}
-        onchange={(e) => change({ keepStyle: e.currentTarget.checked })}
-      />
-      {$t('transfer.keepStyle')}
-    </label>
+    <span class="radios">
+      <span class="radios-label">{$t('transfer.style')}:</span>
+      <label class="opt">
+        <input
+          type="radio"
+          name="style"
+          checked={transfer.keepStyle}
+          onchange={() => change({ keepStyle: true })}
+        />
+        {$t('transfer.style.keep')}
+      </label>
+      <label class="opt">
+        <input
+          type="radio"
+          name="style"
+          checked={!transfer.keepStyle}
+          onchange={() => change({ keepStyle: false })}
+        />
+        {$t('transfer.style.strip')}
+      </label>
+    </span>
 
     <span class="sep" aria-hidden="true"></span>
 
@@ -53,6 +66,8 @@
       {/each}
     </span>
 
+    <span class="sep" aria-hidden="true"></span>
+
     <label class="opt" title={hint}>
       <input
         type="checkbox"
@@ -61,6 +76,9 @@
       />
       {$t('transfer.trim')}
     </label>
+
+    <span class="sep" aria-hidden="true"></span>
+
     <label class="opt" title={hint}>
       <input
         type="checkbox"
@@ -69,6 +87,9 @@
       />
       {$t('transfer.tabsToSpaces')}
     </label>
+
+    <span class="sep" aria-hidden="true"></span>
+
     <label class="opt" title={hint}>
       <input
         type="checkbox"

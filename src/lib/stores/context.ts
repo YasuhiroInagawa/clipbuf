@@ -13,6 +13,7 @@ import type {
   Settings,
   TransferMode,
   TransferOutcome,
+  TransferPreview,
 } from '$lib/ipc/types';
 import { createItemsStore, type ItemsStore } from './items';
 import { createNoticeStore, type NoticeStore } from './notice';
@@ -27,6 +28,7 @@ export interface MainApi {
   setSettings(settings: Settings): Promise<Settings>;
   onSettingsChanged(cb: (settings: Settings) => void): Promise<UnlistenFn>;
   transferItem(id: ItemId, mode: TransferMode): Promise<TransferOutcome>;
+  previewTransfer(id: ItemId): Promise<TransferPreview>;
   removeItem(id: ItemId): Promise<void>;
   clearItems(): Promise<void>;
   hideWindow(): Promise<void>;

@@ -48,6 +48,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             app::commands::list_items,
             app::commands::transfer_item,
+            app::commands::preview_transfer,
             app::commands::remove_item,
             app::commands::clear_items,
             app::commands::get_settings,

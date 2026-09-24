@@ -56,8 +56,16 @@
       "fullwidthToSpace": false
     }
   },
-  "transferOutcome": { "skippedTransforms": true },
-  "appError": { "kind": "hotkeyUnavailable" },
+  "transferOutcome": {
+    "skippedTransforms": true
+  },
+  "transferPreview": {
+    "text": "a b",
+    "skippedTransforms": false
+  },
+  "appError": {
+    "kind": "hotkeyUnavailable"
+  },
   "errorKinds": [
     "itemNotFound",
     "writeFailed",
@@ -69,7 +77,11 @@
   ],
   "captureCapabilities": ["full", "limitedXWayland", "unavailable", "denied"],
   "captureStatuses": ["full", "limitedXWayland", "unavailable", "denied", "readFailed"],
-  "platformInfo": { "os": "macos", "displayServer": "quartz", "capture": "full" },
+  "platformInfo": {
+    "os": "macos",
+    "displayServer": "quartz",
+    "capture": "full"
+  },
   "events": {
     "itemAdded": "clipbuf://item-added",
     "itemsChanged": "clipbuf://items-changed",

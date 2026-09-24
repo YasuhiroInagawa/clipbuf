@@ -28,6 +28,38 @@ export const TOKEN_SYMBOL: Readonly<Record<Exclude<TokenKind, 'text'>, string>> 
   control: '�',
 };
 
+/** Which newline convention a `newline` token holds (3.7). */
+export type NewlineKind = 'crlf' | 'lf' | 'cr';
+
+export function newlineKind(value: string): NewlineKind {
+  if (value === '\r\n') return 'crlf';
+  return value === '\r' ? 'cr' : 'lf';
+}
+
+/** Newline conventions present in `text`, in CRLF → LF → CR order. */
+export function newlineKindsIn(text: string): NewlineKind[] {
+  const seen = new Set<NewlineKind>();
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '\r') {
+      if (text[i + 1] === '\n') {
+        seen.add('crlf');
+        i += 1;
+      } else {
+        seen.add('cr');
+      }
+    } else if (c === '\n') {
+      seen.add('lf');
+    }
+  }
+  return (['crlf', 'lf', 'cr'] as const).filter((k) => seen.has(k));
+}
+
+/** i18n key naming a non-text token; newlines resolve to their convention (3.8). */
+export function tokenKey(kind: Exclude<TokenKind, 'text'>, value: string): string {
+  return kind === 'newline' ? `token.newline.${newlineKind(value)}` : `token.${kind}`;
+}
+
 function isBidi(code: number): boolean {
   return (
     code === 0x200e ||

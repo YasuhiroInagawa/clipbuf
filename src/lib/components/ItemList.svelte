@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ItemDto, ItemId, TransferMode } from '$lib/ipc/types';
+  import type { ItemDto, ItemId, TransferMode, TransferPreview } from '$lib/ipc/types';
   import { t } from '$lib/stores/i18n';
   import type { SelectionStore } from '$lib/stores/selection';
   import type { Readable } from 'svelte/store';
@@ -10,9 +10,10 @@
     selection: SelectionStore;
     highlightId: ItemId | null;
     onTransfer: (id: ItemId, mode: TransferMode) => void;
+    loadPreview: (id: ItemId) => Promise<TransferPreview>;
   }
 
-  let { items, selection, highlightId, onTransfer }: Props = $props();
+  let { items, selection, highlightId, onTransfer, loadPreview }: Props = $props();
   const selectedId = $derived(selection.selectedId);
 </script>
 
@@ -27,6 +28,7 @@
         highlight={item.id === highlightId}
         onSelect={() => selection.select(item.id)}
         onTransfer={(mode) => onTransfer(item.id, mode)}
+        loadPreview={() => loadPreview(item.id)}
       />
     {/each}
   </ul>

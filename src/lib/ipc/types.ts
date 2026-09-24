@@ -69,6 +69,12 @@ export interface TransferOutcome {
   skippedTransforms: boolean;
 }
 
+/** Text a transfer would place on the clipboard, for the full-text preview (4.7). */
+export interface TransferPreview {
+  text: string;
+  skippedTransforms: boolean;
+}
+
 export type ErrorKind =
   | 'itemNotFound'
   | 'writeFailed'

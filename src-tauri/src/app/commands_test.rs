@@ -1,7 +1,9 @@
 use std::sync::{Arc, Mutex};
 
 use super::events::EventSink;
-use super::ops::{clear_items, get_settings, list_items, remove_item, transfer_item};
+use super::ops::{
+    clear_items, get_settings, list_items, preview_transfer, remove_item, transfer_item,
+};
 use super::state::AppState;
 use crate::buffer::PushResult;
 use crate::clipboard::fake::FakeClipboard;
@@ -308,4 +310,82 @@ fn get_settings_reflects_the_store() {
     };
     f.state.settings.update(next.clone()).unwrap();
     assert_eq!(get_settings(&f.state), next);
+}
+
+// ---- preview ------------------------------------------------------------------------------
+
+#[test]
+fn preview_matches_what_transfer_would_write_for_every_option_set() {
+    for (options, tab_width) in [
+        (TransferOptions::default(), 4),
+        (
+            TransferOptions {
+                newline: NewlineMode::Space,
+                trim: true,
+                tabs_to_spaces: true,
+                fullwidth_to_space: true,
+                keep_style: false,
+            },
+            2,
+        ),
+        (
+            TransferOptions {
+                keep_style: true,
+                newline: NewlineMode::Remove,
+                ..TransferOptions::default()
+            },
+            4,
+        ),
+    ] {
+        // plain item
+        let f = fixture();
+        let id = push(&f.state, " a\tb\r\n\u{3000}c ", None);
+        let next = Settings {
+            tab_width,
+            transfer: options,
+            ..f.state.settings.get()
+        };
+        f.state.settings.update(next).unwrap();
+        let preview = preview_transfer(&f.state, id).unwrap();
+        let outcome = transfer_item(&f.state, id, TransferMode::Options).unwrap();
+        assert_eq!(preview.text, f.fake.written()[0].text, "{options:?}");
+        assert_eq!(preview.skipped_transforms, outcome.skipped_transforms);
+
+        // styled item: keep_style + transforms must report the same skip decision
+        let g = fixture();
+        let sid = push(&g.state, " a\tb\r\n\u{3000}c ", Some(HTML));
+        let next = Settings {
+            tab_width,
+            transfer: options,
+            ..g.state.settings.get()
+        };
+        g.state.settings.update(next).unwrap();
+        let preview = preview_transfer(&g.state, sid).unwrap();
+        let outcome = transfer_item(&g.state, sid, TransferMode::Options).unwrap();
+        assert_eq!(preview.text, g.fake.written()[0].text, "styled {options:?}");
+        assert_eq!(preview.skipped_transforms, outcome.skipped_transforms);
+    }
+}
+
+#[test]
+fn preview_does_not_touch_the_clipboard_or_the_buffer() {
+    let f = fixture();
+    let id = push(&f.state, "text\n", None);
+    let before = list_items(&f.state);
+    preview_transfer(&f.state, id).unwrap();
+    assert!(f.fake.written().is_empty(), "preview must not write");
+    assert!(
+        !f.state.last_write.matches("text\n"),
+        "preview must not record a write"
+    );
+    assert_eq!(list_items(&f.state), before);
+}
+
+#[test]
+fn preview_of_an_unknown_item_reports_item_not_found() {
+    let f = fixture();
+    assert_eq!(
+        preview_transfer(&f.state, 999).unwrap_err().kind,
+        ErrorKind::ItemNotFound
+    );
 }
