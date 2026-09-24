@@ -90,56 +90,70 @@
     };
   });
 
-  /** Comfortable starting size when the reader has not resized the popover yet. */
+  /** Comfortable starting width when the reader has not resized the popover yet. */
   const DEFAULT_MAX_WIDTH_PX = 640;
+  /** Gap kept at the window's bottom-right so the resize grip stays reachable (4.10.2). */
   const MARGIN_PX = 16;
+  const MIN_WIDTH_PX = 160;
+  const MIN_HEIGHT_PX = 64;
 
-  /** Apply the remembered size, or a content-sized one, and remember later user resizes (4.10). */
+  /**
+   * Place the popover at the row's bottom-left — the row itself stays visible and clickable —
+   * and size it within the window (4.10.1, 4.10.2). A remembered size that no longer fits is
+   * shrunk, so the popover never runs off-window.
+   */
+  function layout(element: HTMLDivElement): { width: number; height: number } {
+    const rect = anchorEl?.getBoundingClientRect();
+    const left = rect ? rect.left : MARGIN_PX;
+    const top = rect ? rect.bottom : MARGIN_PX;
+    const availableWidth = Math.max(MIN_WIDTH_PX, window.innerWidth - MARGIN_PX - left);
+    const availableHeight = Math.max(MIN_HEIGHT_PX, window.innerHeight - MARGIN_PX - top);
+
+    const desired = rememberedSize ?? {
+      width: Math.min(element.scrollWidth + 2, DEFAULT_MAX_WIDTH_PX),
+      height: Math.min(element.scrollHeight + 2, window.innerHeight / 2),
+    };
+    const applied = {
+      width: Math.min(desired.width, availableWidth),
+      height: Math.min(desired.height, availableHeight),
+    };
+
+    element.style.left = `${left}px`;
+    element.style.top = `${top}px`;
+    element.style.maxWidth = `${availableWidth}px`;
+    element.style.maxHeight = `${availableHeight}px`;
+    element.style.width = `${applied.width}px`;
+    element.style.height = `${applied.height}px`;
+    // A window that shrank also shrinks what we remember, so the next popover fits too.
+    if (rememberedSize) rememberedSize = applied;
+    return applied;
+  }
+
   $effect(() => {
     const element = box;
     if (!element) return;
+    let lastSeen = layout(element);
 
-    const applied = rememberedSize ?? {
-      width: Math.min(element.scrollWidth + 2, DEFAULT_MAX_WIDTH_PX, window.innerWidth - MARGIN_PX),
-      height: Math.min(
-        element.scrollHeight + 2,
-        window.innerHeight / 2,
-        window.innerHeight - MARGIN_PX,
-      ),
+    const onWindowResize = (): void => {
+      lastSeen = layout(element);
     };
-    element.style.width = `${applied.width}px`;
-    element.style.height = `${applied.height}px`;
+    window.addEventListener('resize', onWindowResize);
 
-    if (typeof ResizeObserver === 'undefined') return;
-    // Ignore the size we just set; only a drag by the reader is worth remembering.
-    let lastSeen = applied;
-    const observer = new ResizeObserver(() => {
-      const current = { width: element.offsetWidth, height: element.offsetHeight };
-      if (current.width === lastSeen.width && current.height === lastSeen.height) return;
-      lastSeen = current;
-      rememberedSize = current;
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
-  });
-
-  /** Keep the popover inside the window, preferring just below the row. */
-  $effect(() => {
-    if (!box || !anchorEl) return;
-    const rect = anchorEl.getBoundingClientRect();
-    const size = box.getBoundingClientRect();
-    const margin = 8;
-    const left = Math.max(
-      margin,
-      Math.min(rect.left, document.documentElement.clientWidth - size.width - margin),
-    );
-    const below = rect.bottom + 4;
-    const top =
-      below + size.height + margin <= document.documentElement.clientHeight
-        ? below
-        : Math.max(margin, rect.top - size.height - 4);
-    box.style.left = `${left}px`;
-    box.style.top = `${top}px`;
+    let observer: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(() => {
+        const current = { width: element.offsetWidth, height: element.offsetHeight };
+        // Ignore the size we just applied; only a drag by the reader is worth remembering.
+        if (current.width === lastSeen.width && current.height === lastSeen.height) return;
+        lastSeen = current;
+        rememberedSize = current;
+      });
+      observer.observe(element);
+    }
+    return () => {
+      window.removeEventListener('resize', onWindowResize);
+      observer?.disconnect();
+    };
   });
 </script>
 
@@ -203,9 +217,7 @@
   .pv {
     position: fixed;
     z-index: 10;
-    /* The drag limit is the screen; the comfortable starting size is set in script. */
-    max-width: calc(100vw - 16px);
-    max-height: calc(100vh - 16px);
+    /* Position and limits are computed per row in `layout` (4.10.1, 4.10.2). */
     overflow: auto;
     padding: 0.4em 0.6em;
     border-radius: 6px;

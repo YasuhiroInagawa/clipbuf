@@ -85,13 +85,64 @@ describe('FullTextPreview', () => {
     expect(getComputedStyle(container.querySelector('.pv') as HTMLElement).resize).toBe('both');
   });
 
-  it('can be enlarged up to the size of the screen (4.10)', async () => {
+  /** jsdom reports zero-sized rects, so anchors state their geometry explicitly. */
+  function anchorAt(left: number, top: number): HTMLElement {
+    const el = document.createElement('div');
+    el.getBoundingClientRect = () =>
+      ({ left, top, right: left + 300, bottom: top + 24, width: 300, height: 24 }) as DOMRect;
+    document.body.appendChild(el);
+    return el;
+  }
+
+  it('starts at the bottom-left corner of the hovered row, leaving it visible (4.10.1)', async () => {
     const load = vi.fn(async () => ({ text: 'text', skippedTransforms: false }));
-    const { container } = render(FullTextPreview, { load, anchorEl: null, wrap: true });
+    const { container } = render(FullTextPreview, {
+      load,
+      anchorEl: anchorAt(40, 120),
+      wrap: true,
+    });
     await waitFor(() => expect(container.querySelector('.pv')).not.toBeNull());
-    const style = getComputedStyle(container.querySelector('.pv') as HTMLElement);
-    expect(style.maxWidth).toContain('100vw');
-    expect(style.maxHeight).toContain('100vh');
+    const box = container.querySelector('.pv') as HTMLElement;
+    expect(box.style.left).toBe('40px');
+    // The anchor is 24px tall, so the popover starts just under it and never covers the row.
+    expect(box.style.top).toBe('144px');
+  });
+
+  it('never reaches past the window, keeping a margin at the bottom right (4.10.2)', async () => {
+    const load = vi.fn(async () => ({ text: 'x'.repeat(5000), skippedTransforms: false }));
+    const { container } = render(FullTextPreview, {
+      load,
+      anchorEl: anchorAt(200, 300),
+      wrap: false,
+    });
+    await waitFor(() => expect(container.querySelector('.pv')).not.toBeNull());
+    const box = container.querySelector('.pv') as HTMLElement;
+    const margin = 16;
+    expect(parseFloat(box.style.maxWidth)).toBe(window.innerWidth - margin - 200);
+    expect(parseFloat(box.style.maxHeight)).toBe(window.innerHeight - margin - 324);
+    expect(parseFloat(box.style.width)).toBeLessThanOrEqual(window.innerWidth - margin - 200);
+    expect(parseFloat(box.style.height)).toBeLessThanOrEqual(window.innerHeight - margin - 324);
+  });
+
+  it('shrinks to fit when the window gets smaller (4.10.2)', async () => {
+    const load = vi.fn(async () => ({ text: 'x'.repeat(5000), skippedTransforms: false }));
+    const { container } = render(FullTextPreview, {
+      load,
+      anchorEl: anchorAt(0, 0),
+      wrap: false,
+    });
+    await waitFor(() => expect(container.querySelector('.pv')).not.toBeNull());
+    const box = container.querySelector('.pv') as HTMLElement;
+
+    const originalWidth = window.innerWidth;
+    try {
+      Object.defineProperty(window, 'innerWidth', { value: 320, configurable: true });
+      window.dispatchEvent(new Event('resize'));
+      await waitFor(() => expect(parseFloat(box.style.width)).toBeLessThanOrEqual(320 - 16));
+      expect(parseFloat(box.style.maxWidth)).toBe(320 - 16);
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { value: originalWidth, configurable: true });
+    }
   });
 
   it('does not close while a resize drag is in progress (4.10)', async () => {

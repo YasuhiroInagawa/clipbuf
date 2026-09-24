@@ -225,7 +225,28 @@ describe('MainWindow — full-text preview', () => {
     const { container } = await mount(f);
     const preview = container.querySelectorAll('.item .preview')[1] as HTMLElement;
     await fireEvent.mouseOver(preview);
-    const popover = await screen.findByRole('tooltip');
+    const popover = await screen.findByRole('tooltip', {}, { timeout: 2000 });
+    expect(popover).toHaveTextContent('preview-of-2');
+    expect(f.previews).toEqual([2]);
+  });
+
+  it('waits before opening, so passing over a row does not block the one below (4.5, 4.5.1)', async () => {
+    const f = fake();
+    const { container } = await mount(f);
+    const rows = container.querySelectorAll('.item');
+
+    // Sweeping across the first row on the way to the second must not open anything.
+    await fireEvent.mouseOver(rows[0].querySelector('.preview')!);
+    await new Promise((r) => setTimeout(r, 120));
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    await fireEvent.mouseLeave(rows[0]);
+    await fireEvent.mouseOver(rows[1].querySelector('.preview')!);
+    await new Promise((r) => setTimeout(r, 120));
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    expect(f.previews).toEqual([]);
+
+    // Resting on the second row opens its preview.
+    const popover = await screen.findByRole('tooltip', {}, { timeout: 2000 });
     expect(popover).toHaveTextContent('preview-of-2');
     expect(f.previews).toEqual([2]);
   });
@@ -235,7 +256,7 @@ describe('MainWindow — full-text preview', () => {
     const { container } = await mount(f);
     const row = container.querySelectorAll('.item')[0] as HTMLElement;
     await fireEvent.mouseOver(row.querySelector('.preview')!);
-    const popover = await screen.findByRole('tooltip');
+    const popover = await screen.findByRole('tooltip', {}, { timeout: 2000 });
     // Moving from the row into the popover must not dismiss it.
     await fireEvent.mouseLeave(row);
     await fireEvent.mouseEnter(popover);
@@ -252,7 +273,7 @@ describe('MainWindow — full-text preview', () => {
     const { container } = await mount(f);
     const row = container.querySelectorAll('.item')[0] as HTMLElement;
     await fireEvent.mouseOver(row.querySelector('.preview')!);
-    await screen.findByRole('tooltip');
+    await screen.findByRole('tooltip', {}, { timeout: 2000 });
     await fireEvent.mouseLeave(row);
     await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
   });

@@ -25,24 +25,59 @@
   /** The pointer travels through a gap between the row and the popover; close only if it has
    *  not arrived in the popover shortly after leaving the row (4.8). */
   let closeTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Opening is delayed so that moving the pointer across rows on the way to the intended one
+   *  does not cover it with a popover (4.5, 4.5.1). */
+  let openTimer: ReturnType<typeof setTimeout> | null = null;
 
   const CLOSE_GRACE_MS = 120;
+  const OPEN_DELAY_MS = 500;
 
-  function openPreview(): void {
+  function cancelTimers(): void {
     if (closeTimer) {
       clearTimeout(closeTimer);
       closeTimer = null;
     }
+    if (openTimer) {
+      clearTimeout(openTimer);
+      openTimer = null;
+    }
+  }
+
+  /** Called while the pointer rests on the text: open after the delay. */
+  function requestOpenPreview(): void {
+    if (previewOpen || openTimer) {
+      if (closeTimer) {
+        clearTimeout(closeTimer);
+        closeTimer = null;
+      }
+      return;
+    }
+    cancelTimers();
+    openTimer = setTimeout(() => {
+      previewOpen = true;
+      openTimer = null;
+    }, OPEN_DELAY_MS);
+  }
+
+  /** Called when the pointer is already inside the popover: keep it open immediately. */
+  function openPreview(): void {
+    cancelTimers();
     previewOpen = true;
   }
 
   function requestClosePreview(): void {
+    if (openTimer) {
+      clearTimeout(openTimer);
+      openTimer = null;
+    }
     if (closeTimer) clearTimeout(closeTimer);
     closeTimer = setTimeout(() => {
       previewOpen = false;
       closeTimer = null;
     }, CLOSE_GRACE_MS);
   }
+
+  $effect(() => () => cancelTimers());
 
   // Keep the keyboard selection visible.
   $effect(() => {
@@ -89,7 +124,7 @@
   }}
 >
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="text" onmouseover={openPreview} onfocusin={openPreview}>
+  <div class="text" onmouseover={requestOpenPreview} onfocusin={requestOpenPreview}>
     <PreviewLine text={item.text} />
   </div>
   <WarningIcons warnings={item.warnings} newlineKinds={newlineKindsIn(item.text)} />

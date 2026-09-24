@@ -334,12 +334,15 @@ flowchart TD
 | 4.2 | 編集不可 | PreviewLine（非 contenteditable） | — | — |
 | 4.3 | 選択・コピー不可 | PreviewLine（user-select none, copy 抑止） | — | — |
 | 4.4 | 横スクロールバーを出さない | PreviewLine | — | — |
-| 4.5 | ホバーで全文プレビュー | ItemRow, FullTextPreview | preview_transfer | 全文プレビュー |
+| 4.5 | 一定時間ホバーで全文プレビュー | ItemRow（開くまで 500ms） | preview_transfer | 全文プレビュー |
+| 4.5.1 | 通過中は開かない | ItemRow（行を離れるとタイマー破棄） | — | — |
 | 4.6 | 可視化を保ち改行を反映 | FullTextPreview, tokenize | PreviewToken | 全文プレビュー |
 | 4.7 | 転送オプション適用後を表示 | commands.preview_transfer, ops::resolve_transfer | TransferPreview | 全文プレビュー |
 | 4.8 | 両方から外れたら閉じる | ItemRow, FullTextPreview | — | 全文プレビュー |
 | 4.9 | プレビュー内をスクロール | FullTextPreview（pointer-events 有効） | — | — |
 | 4.10 | プレビューのリサイズと記憶 | FullTextPreview（CSS resize + モジュール変数） | — | — |
+| 4.10.1 | 左上を行の左下に合わせる | FullTextPreview（anchor の矩形） | — | — |
+| 4.10.2 | ウィンドウ内に収める / 記憶サイズの縮小 | FullTextPreview（layout + resize 監視） | — | — |
 | 4.11 | 折り返し表示 | FullTextPreview, Settings.previewWrap | — | — |
 | 4.12 | 折り返さず横スクロール | FullTextPreview, Settings.previewWrap | — | — |
 | 5.1 | スタイルあり | analysis（has_style） | Warning::HasStyle | — |
@@ -830,8 +833,8 @@ export function tokenize(text: string): { tokens: PreviewToken[]; truncated: boo
 
 - `MainWindow`: グローバルキー（↑↓ 選択、Enter = options 転送、Shift+Enter = plain 転送、Delete = 削除、Escape = `hideWindow`）。`Notice` と `UpdatePrompt` を配置。`capture-status` を受けて取り込み不可 / 限定 / 拒否の通知を出す
 - `TransferOptions`: 書式（保持 / 削除のラジオ）、改行（そのまま / 削除 / 空白のラジオ）、トリム、タブ変換、全角空白変換。グループ間に区切り線を置く。`keepStyle` が有効なとき他のトグルを「書式付き項目には適用されない」旨のヒント付きで表示（無効化はしない：書式なし項目には適用されるため 7.6）
-- `ItemRow`: クリックで `transferItem(id, 'options')`、「プレーン」ボタンを常時表示し、「原文」は書式付きの項目にだけ表示する（書式なしの項目では行クリックと結果が変わらず、ボタンの意味が伝わらないため）。どちらも警告アイコンと区別できるボタン様の見た目で、説明にテキスト変換が適用されないことを明記する。転送成功で 600ms のハイライト、`skippedTransforms` なら `Notice` へ通知。テキストへのホバーで `FullTextPreview` を開き、離れると閉じる（4.5, 4.8）
-- `FullTextPreview`: `preview_transfer` の結果を `tokenize` し、改行トークンで実際に行を分けて描画する。本文に含まれる改行種別の凡例（色見本 + CRLF/LF/CR）を下部に並べる（3.9）。タブは 1 文字分の記号。ポップオーバーは行の近くに出し、画面外にはみ出さないよう位置を補正する。**ポインタを受け付ける**ため中をスクロールでき、行とポップオーバーの両方から離れたときに短い猶予をおいて閉じる（4.8, 4.9）。CSS の `resize` で大きさを変えられ、変更後の大きさはモジュール変数に記憶してプロセス内で再利用する（4.10）。`Settings.preview_wrap` が真なら折り返し、偽なら折り返さず横スクロール（4.11, 4.12）
+- `ItemRow`: クリックで `transferItem(id, 'options')`、「プレーン」ボタンを常時表示し、「原文」は書式付きの項目にだけ表示する（書式なしの項目では行クリックと結果が変わらず、ボタンの意味が伝わらないため）。どちらも警告アイコンと区別できるボタン様の見た目で、説明にテキスト変換が適用されないことを明記する。転送成功で 600ms のハイライト、`skippedTransforms` なら `Notice` へ通知。テキストの上にポインタが 500ms とどまったら `FullTextPreview` を開く。行を離れるとタイマーを捨てるので、目的の行へ移動する途中でプレビューが開いて邪魔をすることがない（4.5, 4.5.1, 4.8）
+- `FullTextPreview`: `preview_transfer` の結果を `tokenize` し、改行トークンで実際に行を分けて描画する。本文に含まれる改行種別の凡例（色見本 + CRLF/LF/CR）を下部に並べる（3.9）。タブは 1 文字分の記号。ポップオーバーは行の近くに出し、画面外にはみ出さないよう位置を補正する。**ポインタを受け付ける**ため中をスクロールでき、行とポップオーバーの両方から離れたときに短い猶予をおいて閉じる（4.8, 4.9）。CSS の `resize` で大きさを変えられ、変更後の大きさはモジュール変数に記憶してプロセス内で再利用する（4.10）。配置は行の矩形の左下に合わせ（行を覆わないのでクリックで転送できる）、右下はウィンドウの右下から余白（16px）を残す位置を上限とする。ウィンドウが小さくなった場合は記憶している大きさも縮めて収める（4.10.1, 4.10.2）。`Settings.preview_wrap` が真なら折り返し、偽なら折り返さず横スクロール（4.11, 4.12）
 - `PreviewLine`: `tokenize` の結果を `<span class={kind}>` で描画。改行は値（`\r\n` / `\n` / `\r`）で色を分ける（3.7）。`overflow: hidden; white-space: nowrap; user-select: none`、`copy` イベントを `preventDefault`。右端はフェードで見切れを示す。全文は `FullTextPreview` で見るため行はスクロールしない（4.1, 4.4）。行全体の高さは 1 行固定
 - `WarningIcons`: `warnings` に含まれるものだけを固定順で描画。`title` に i18n の説明（5.8）
 - `Notice`: 種別（success / info / error）と自動消去
