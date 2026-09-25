@@ -1,48 +1,56 @@
 # clipbuf
 
-貼り付ける前に、**見える・止められる・直せる**クリップボードバッファ。
+**See it, stop it, fix it** — before you paste.
 
-他アプリでコピーしたテキストを自動で取り込み、直近 N 件を 1 行ずつ表示します。半角/全角空白、タブ、
-改行、NBSP、ゼロ幅スペースといった見えない文字を記号と色で示し、書式や機種依存文字の有無を警告
-アイコンで伝えます。行をクリックすると、選んだ無害化を適用したうえでクリップボードへ書き戻します。
-元のデータは変更しません。
+*[日本語版はこちら](README.ja.md)*
 
-Windows / macOS / Linux。無料・オープンソース（MIT）。
+clipbuf picks up whatever you copy in other applications and keeps the last N items, one line
+each. It marks the characters you cannot otherwise see — spaces, ideographic spaces, tabs, line
+breaks, non-breaking spaces, zero-width characters — with their own symbol and colour, and warns
+about formatting, platform-dependent characters and mixed line endings. Click a row and clipbuf
+writes it back to the clipboard with the clean-ups you chose applied. The stored item itself is
+never altered.
 
-## できること
+Windows, macOS and Linux. Free and open source (MIT).
 
-- **自動取り込み** — 他アプリでのコピーを観測して FIFO で保持（既定 20 件）
-- **可視化** — 空白・タブ・改行・NBSP・ゼロ幅文字などを記号と色で区別。CRLF / LF / CR も色分け
-- **警告** — 書式あり、先頭末尾の空白、タブ、機種依存文字、制御文字、改行コード混在
-- **無害化転送** — 書式削除、改行の削除/空白置換、トリム、タブ→空白、全角空白→半角をトグルで選択
-- **常駐** — 最前面の小さなウィンドウ。グローバルホットキー（既定 `Alt+Shift+V`）とトレイアイコン
+## What it does
 
-## 持ち出さない
+- **Captures automatically** — watches for copies in other applications, keeping the most recent
+  ones in a FIFO buffer (20 by default)
+- **Makes the invisible visible** — spaces, tabs, line breaks, NBSP and zero-width characters get
+  a symbol and a colour of their own; CRLF, LF and CR are told apart
+- **Warns** — formatting present, leading or trailing whitespace, tabs, platform-dependent
+  characters, control characters, mixed line endings
+- **Transfers cleanly** — strip formatting, drop or replace line breaks, trim, tabs to spaces,
+  ideographic spaces to ordinary ones, each a toggle
+- **Stays out of the way** — a small always-on-top window, a global hotkey (`Alt+Shift+V` by
+  default) and a tray icon
 
-- 取り込んだ内容は**メモリ上にのみ**保持します。ディスクに保存せず、終了時に破棄します
-- 内容をネットワークへ送信しません。通信は**更新確認だけ**です
-- 内容をログに出力しません
-- パスワードマネージャ等が付ける「監視対象外」マークの付いた内容は取り込みません
+## What it never does with what you copy
 
-## 導入
+- Keeps captured items **in memory only**. Nothing is written to disk, and everything is
+  discarded when clipbuf exits
+- Never sends their contents over the network. The **update check is the only network access**
+- Never writes their contents to a log
+- Ignores anything marked as not-for-monitoring by password managers and the like
 
-[Releases](https://github.com/YasuhiroInagawa/clipbuf/releases) から各 OS の配布物を取得してください。
-各リリースには全ファイルの SHA-256 一覧（`SHA256SUMS.txt`）と、依存ライブラリのライセンス一覧
-（`THIRD-PARTY.md`）を添付しています。
+## Installing
+
+Grab the build for your system from [Releases](https://github.com/YasuhiroInagawa/clipbuf/releases).
+Every release also carries `SHA256SUMS.txt` for all files and `THIRD-PARTY.md`, the licences of
+everything clipbuf is built on.
 
 ### Windows
 
-`clipbuf_x.y.z_x64-setup.exe`（NSIS インストーラ）を実行します。
+Run `clipbuf_x.y.z_x64-setup.exe`, the NSIS installer.
 
-**「WindowsによってPCが保護されました」と表示されます。** clipbuf にはコード署名を行っていないため
-です。署名証明書は個人が継続的に負担するには高額で、無料ツールとして配布する方針と釣り合わないと
-判断しました。続行する場合は次の手順です。
+**Windows will show "Windows protected your PC".** clipbuf is not code signed: a certificate
+costs more per year than a free tool from one person can justify. To continue:
 
-1. 青いダイアログの「詳細情報」をクリック
-2. 現れた「実行」ボタンをクリック
+1. Click **More info** in the blue dialog
+2. Click the **Run anyway** button that appears
 
-不安な場合は、ダウンロードしたファイルの SHA-256 が `SHA256SUMS.txt` の値と一致することを確認して
-ください。
+If you would rather check first, compare the download against `SHA256SUMS.txt`:
 
 ```powershell
 Get-FileHash .\clipbuf_x.y.z_x64-setup.exe -Algorithm SHA256
@@ -50,21 +58,21 @@ Get-FileHash .\clipbuf_x.y.z_x64-setup.exe -Algorithm SHA256
 
 ### macOS
 
-`clipbuf_x.y.z_universal.dmg` を開き、アプリケーションフォルダへドラッグします。Apple Silicon と
-Intel の両方で動く universal バイナリです。開発者署名と公証を行っているため、警告なく起動できます。
+Open `clipbuf_x.y.z_universal.dmg` and drag clipbuf to Applications. It is a universal binary, so
+it runs natively on both Apple Silicon and Intel. The app is signed and notarised, so it starts
+without a Gatekeeper warning.
 
-**初回起動時に、他アプリのコピーを取り込めないことがあります。** macOS がクリップボードの読み取りを
-制限している場合、clipbuf は「クリップボードへのアクセスが拒否されています」と表示します。次の手順で
-許可してください。
+**If nothing is captured, macOS is withholding the clipboard.** clipbuf then says so, and you can
+allow it:
 
-1. システム設定 › プライバシーとセキュリティ › **ペーストボード**
-2. 一覧の clipbuf をオンにする
+1. System Settings › Privacy & Security › **Pasteboard**
+2. Turn clipbuf on
 
-clipbuf はメニューバーに常駐し、Dock には表示されません。
+clipbuf lives in the menu bar and stays out of the Dock.
 
 ### Linux
 
-AppImage / deb / rpm を用意しています。
+AppImage, deb and rpm are provided.
 
 ```bash
 chmod +x clipbuf_x.y.z_amd64.AppImage && ./clipbuf_x.y.z_amd64.AppImage
@@ -74,37 +82,37 @@ chmod +x clipbuf_x.y.z_amd64.AppImage && ./clipbuf_x.y.z_amd64.AppImage
 sudo dpkg -i clipbuf_x.y.z_amd64.deb
 ```
 
-**Wayland では取り込みに制約があります。** clipbuf は他アプリのクリップボードを読むため、コンポジタが
-フォーカス外のアプリによる読み取りを許可している必要があります。
+**On Wayland, capturing depends on your compositor.** clipbuf reads another application's
+clipboard, which a compositor has to allow for a window that is not focused.
 
-| 環境 | 取り込み |
-|---|---|
-| X11 | 全アプリから取り込めます |
-| KDE Plasma (Wayland) | `wlr-data-control` に対応しているため取り込めます |
-| Sway / wlroots 系 (Wayland) | 同上 |
-| GNOME (Wayland) | **取り込めません。** `wlr-data-control` を実装していないため、XWayland アプリからのコピーのみ取り込みます |
+| Environment | Capture |
+| --- | --- |
+| X11 | Everything |
+| KDE Plasma (Wayland) | Everything, through `wlr-data-control` |
+| Sway and other wlroots compositors | Same |
+| GNOME (Wayland) | **Nothing but XWayland.** GNOME does not implement `wlr-data-control` |
 
-GNOME Wayland では、clipbuf が「Wayland で data-control が使えないため、X11/XWayland アプリからの
-コピーのみ取り込みます」とウィンドウ上部に表示します。全アプリから取り込みたい場合は、ログイン画面で
-X11 セッションを選択してください。
+Under GNOME on Wayland, clipbuf says so in a banner at the top of the window. Log in to an X11
+session instead if you need to capture from every application.
 
-## 更新
+## Updates
 
-起動時に新しいバージョンの有無を確認し、あればウィンドウ上部に通知します。「更新する」で適用、
-「あとで」で現在のバージョンのまま使い続けます。更新の配布物は署名されており、署名が検証できない
-場合は適用しません。
+clipbuf checks for a new version at startup and offers it in a banner. Accept and it downloads,
+installs and asks you to restart; decline and it keeps running the version you have. Updates are
+signed, and one whose signature does not verify is not installed.
 
-## 設定
+## Settings
 
-トレイアイコン（macOS はメニューバー）から開きます。保持件数、グローバルホットキー、タブ幅、
-ポーリング間隔（macOS / Wayland のみ）、ログイン時に起動、プレビューの折り返し、UI 言語（日本語 /
-英語 / システムに従う）。
+From the tray icon, or the menu bar on macOS: how many items to keep, the global hotkey, tab
+width, polling interval (macOS and Wayland only), start at login, whether the preview wraps long
+lines, and the interface language (English, Japanese, or follow the system).
 
-## 連絡先
+## Getting in touch
 
-質問・不具合報告は [Issues](https://github.com/YasuhiroInagawa/clipbuf/issues) へお願いします。
+Questions and bug reports belong in
+[Issues](https://github.com/YasuhiroInagawa/clipbuf/issues).
 
-## 開発
+## Developing
 
 ```bash
 npm install && npm run tauri dev
@@ -118,10 +126,10 @@ npm test && npm run check && npm run lint
 cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
 ```
 
-依存ライブラリのライセンス一覧を更新するには `npm run licenses` を実行します。手動確認の項目は
-[doc/platform-checklist.md](doc/platform-checklist.md) にあります。
+`npm run licenses` refreshes the third-party licence list. The manual checks that the automated
+suite cannot cover are in [doc/platform-checklist.md](doc/platform-checklist.md).
 
-## ライセンス
+## Licence
 
-MIT。[LICENSE](LICENSE) を参照してください。依存ライブラリのライセンスは
-[THIRD-PARTY.md](THIRD-PARTY.md) にまとめています。
+MIT, see [LICENSE](LICENSE). The licences of everything clipbuf depends on are collected in
+[THIRD-PARTY.md](THIRD-PARTY.md).
