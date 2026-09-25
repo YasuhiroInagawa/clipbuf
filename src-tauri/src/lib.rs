@@ -29,6 +29,8 @@ pub fn run() {
         // Update check and restart (13.6-13.8); the only network access clipbuf makes (10.3).
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        // Opens the repository link in the about window with the user's browser (8.8).
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec![app::HIDDEN_FLAG]),
@@ -60,6 +62,7 @@ pub fn run() {
             app::commands::hide_window,
             app::commands::open_settings,
             app::commands::close_settings,
+            app::commands::close_about,
             app::commands::suspend_hotkey,
             app::commands::resume_hotkey,
         ])

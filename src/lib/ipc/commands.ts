@@ -31,6 +31,7 @@ export const commands = {
   hideWindow: (): Promise<void> => invoke('hide_window'),
   openSettings: (): Promise<void> => invoke('open_settings'),
   closeSettings: (): Promise<void> => invoke('close_settings'),
+  closeAbout: (): Promise<void> => invoke('close_about'),
   suspendHotkey: (): Promise<void> => invoke('suspend_hotkey'),
   resumeHotkey: (): Promise<void> => invoke('resume_hotkey'),
 } as const;

@@ -148,6 +148,8 @@ clipbuf は、デスクトップ（Windows / macOS / Linux）でアプリ間の�
 5. When ユーザーがウィンドウを閉じる操作を行う, the clipbuf shall アプリを終了せずウィンドウを非表示にする
 6. The clipbuf shall ウィンドウの位置とサイズをアプリの再起動後も維持する
 7. The clipbuf shall ユーザーがウィンドウの大きさを変更できるようにする
+8. When ユーザーがトレイメニューから「About」を選ぶ, the clipbuf shall アプリ名・バージョン・ライセンス・リポジトリの場所を示すウィンドウを開く
+9. When ユーザーが About ウィンドウのリポジトリリンクを選ぶ, the clipbuf shall clipbuf のウィンドウ内ではなく既定のブラウザで開く
 
 ### Requirement 9: 設定
 **Objective:** As a ユーザー, I want 保持件数やホットキーなどを自分の使い方に合わせられること, so that 環境ごとに快適に使える

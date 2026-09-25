@@ -1,16 +1,33 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { createAppContext, createSettingsContext, syncLanguage } from '$lib/app';
+  import {
+    createAppContext,
+    createLanguageOnlyStore,
+    createSettingsContext,
+    syncLanguage,
+  } from '$lib/app';
+  import { aboutApi } from '$lib/ipc/about';
   import { updateApi } from '$lib/ipc/update';
   import { currentWindowLabel } from '$lib/ipc/window';
+  import AboutWindow from '$lib/components/AboutWindow.svelte';
   import MainWindow from '$lib/components/MainWindow.svelte';
   import SettingsWindow from '$lib/components/SettingsWindow.svelte';
 
-  const isMain = currentWindowLabel() === 'main';
-  const main = isMain ? createAppContext() : null;
-  const settings = isMain ? null : createSettingsContext();
+  const label = currentWindowLabel();
+  const main = label === 'main' ? createAppContext() : null;
+  const settings = label === 'settings' ? createSettingsContext() : null;
+  // The about window shows no settings, but still follows the saved language (12.4).
+  const aboutLanguage = label === 'about' ? createLanguageOnlyStore() : null;
 
   onMount(() => {
+    if (aboutLanguage) {
+      void aboutLanguage.start();
+      const stop = syncLanguage(aboutLanguage);
+      return () => {
+        stop();
+        aboutLanguage.stop();
+      };
+    }
     if (settings) {
       void settings.store.start();
       const stop = syncLanguage(settings.store);
@@ -34,4 +51,6 @@
     suspendHotkey={settings.suspendHotkey}
     resumeHotkey={settings.resumeHotkey}
   />
+{:else if aboutLanguage}
+  <AboutWindow api={aboutApi} />
 {/if}

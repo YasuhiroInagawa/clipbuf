@@ -112,3 +112,10 @@ pub fn open_settings(app: tauri::AppHandle) -> Result<(), AppError> {
     super::window::open_settings(&app)
         .map_err(|_| AppError::from(crate::model::ErrorKind::SettingsIo))
 }
+
+/// The about window's close button (8.8); it carries no state, so closing simply discards it.
+#[tauri::command]
+pub fn close_about(app: tauri::AppHandle) -> Result<(), AppError> {
+    super::window::close_about(&app)
+        .map_err(|_| AppError::from(crate::model::ErrorKind::SettingsIo))
+}

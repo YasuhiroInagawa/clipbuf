@@ -30,6 +30,14 @@ export function createSettingsContext(): {
 }
 
 /**
+ * A settings store for a window that has no settings UI of its own (the about window): it
+ * exists only so that window follows the saved language like the others (12.4).
+ */
+export function createLanguageOnlyStore(): SettingsStore {
+  return createSettingsStore({ ...commands, ...events });
+}
+
+/**
  * Keep the UI language in step with the saved setting (12.4). Both windows call this, so a
  * change saved in the settings window reaches the main window through `settings-changed`.
  */

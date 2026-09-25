@@ -1,4 +1,4 @@
-//! System tray / menu bar icon with "Show / Hide", "Settings", "Quit" (8.4).
+//! System tray / menu bar icon with "Show / Hide", "Settings", "About", "Quit" (8.4, 8.8).
 
 use tauri::AppHandle;
 use tauri::menu::{Menu, MenuItem};
@@ -8,13 +8,15 @@ use super::window;
 
 const ID_TOGGLE: &str = "toggle";
 const ID_SETTINGS: &str = "settings";
+const ID_ABOUT: &str = "about";
 const ID_QUIT: &str = "quit";
 
 pub fn install(app: &AppHandle) -> tauri::Result<()> {
     let toggle = MenuItem::with_id(app, ID_TOGGLE, "Show / Hide", true, None::<&str>)?;
     let settings = MenuItem::with_id(app, ID_SETTINGS, "Settings…", true, None::<&str>)?;
+    let about = MenuItem::with_id(app, ID_ABOUT, "About clipbuf", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, ID_QUIT, "Quit clipbuf", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&toggle, &settings, &quit])?;
+    let menu = Menu::with_items(app, &[&toggle, &settings, &about, &quit])?;
 
     let mut builder = TrayIconBuilder::with_id("clipbuf")
         .menu(&menu)
@@ -25,6 +27,11 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
             ID_SETTINGS => {
                 if let Err(e) = window::open_settings(app) {
                     log::warn!("tray: could not open settings window: {e}");
+                }
+            }
+            ID_ABOUT => {
+                if let Err(e) = window::open_about(app) {
+                    log::warn!("tray: could not open about window: {e}");
                 }
             }
             ID_QUIT => app.exit(0),
