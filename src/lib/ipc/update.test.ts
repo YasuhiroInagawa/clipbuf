@@ -1,8 +1,14 @@
 import { readFileSync, readdirSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-const SRC = new URL('../../', import.meta.url).pathname;
+// `fileURLToPath`, not `URL.pathname`: on Windows the latter yields `/D:/...`, which `join`
+// then turns into a path that does not exist.
+const SRC = fileURLToPath(new URL('../../', import.meta.url));
+
+/** Repo-relative and slash-separated, so the expectations below read the same on every OS. */
+const name = (path: string): string => relative(SRC, path).split(sep).join('/');
 
 function sources(): string[] {
   const out: string[] = [];
@@ -33,13 +39,13 @@ describe('network access', () => {
         readFileSync(path, 'utf8'),
       ),
     );
-    expect(offenders.map((p) => relative(SRC, p))).toEqual([]);
+    expect(offenders.map(name)).toEqual([]);
   });
 
   it('reaches the updater only through lib/ipc/update.ts (10.4)', () => {
     const importers = sources()
       .filter((path) => /@tauri-apps\/plugin-(updater|process)/.test(readFileSync(path, 'utf8')))
-      .map((p) => relative(SRC, p));
+      .map(name);
     expect(importers).toEqual(['lib/ipc/update.ts']);
   });
 });
