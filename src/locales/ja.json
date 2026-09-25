@@ -89,11 +89,12 @@
   "update.installing": "ダウンロード中…",
   "update.failed": "更新を適用できませんでした。",
   "about.title": "clipbuf について",
-  "about.tagline": "貼り付ける前に、見える・止められる・直せる。",
   "about.version": "バージョン",
+  "about.author": "作者",
   "about.license": "ライセンス",
   "about.license.value": "MIT",
   "about.repository": "リポジトリを開く",
   "about.privacy": "取り込んだ項目はメモリ上にのみ保持され、ディスクにも外部にも出ません。ネットワーク通信は更新確認だけです。",
+  "about.issues": "質問・不具合報告はリポジトリの Issues へお願いします。",
   "about.close": "閉じる"
 }

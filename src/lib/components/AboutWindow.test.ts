@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
 import en from '../../locales/en.json';
 import ja from '../../locales/ja.json';
-import { REPOSITORY_URL, type AboutApi } from '$lib/ipc/about';
+import { AUTHOR, REPOSITORY_URL, type AboutApi } from '$lib/ipc/about';
 import { i18n } from '$lib/stores/i18n';
 import AboutWindow from './AboutWindow.svelte';
 
@@ -36,10 +36,17 @@ describe('AboutWindow', () => {
     expect(await screen.findByTestId('version')).toHaveTextContent('0.4.2');
   });
 
-  it('names the licence and links the repository (8.8, 13.1)', async () => {
+  it('names the author, the licence and the repository (8.8, 13.1)', async () => {
     render(AboutWindow, { api: api() });
+    expect(screen.getByText(AUTHOR)).toBeInTheDocument();
     expect(screen.getByText(en['about.license.value'])).toBeInTheDocument();
     expect(screen.getByText(REPOSITORY_URL)).toBeInTheDocument();
+  });
+
+  it('points at the issues rather than publishing an address to write to', async () => {
+    const { container } = render(AboutWindow, { api: api() });
+    expect(screen.getByText(en['about.issues'])).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/@|mailto:/);
   });
 
   it('hands the repository URL to the browser rather than navigating itself', async () => {
@@ -60,13 +67,13 @@ describe('AboutWindow', () => {
 
   it('still renders when the version cannot be read', async () => {
     render(AboutWindow, { api: api({ failVersion: true }) });
-    expect(await screen.findByText(en['about.tagline'])).toBeInTheDocument();
+    expect(await screen.findByText(en['about.license.value'])).toBeInTheDocument();
     expect(screen.getByTestId('version')).toHaveTextContent('—');
   });
 
   it('follows the chosen language (12.4)', async () => {
     render(AboutWindow, { api: api() });
     i18n.setLanguage('ja');
-    expect(await screen.findByText(ja['about.tagline'])).toBeInTheDocument();
+    expect(await screen.findByText(ja['about.issues'])).toBeInTheDocument();
   });
 });

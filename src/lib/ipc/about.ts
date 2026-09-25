@@ -11,6 +11,9 @@ import { commands } from './commands';
 /** Where the source, the licence and the releases live (13.1). */
 export const REPOSITORY_URL = 'https://github.com/YasuhiroInagawa/clipbuf';
 
+/** The MIT copyright holder, as named in LICENSE. */
+export const AUTHOR = 'Yasuhiro Inagawa';
+
 export interface AboutApi {
   getVersion(): Promise<string>;
   /** Opens the repository in the user's browser, not in a clipbuf window. */

@@ -2,9 +2,9 @@
 name = "clipbuf"
 version = "0.1.0"
 description = "Clipboard buffer that visualizes and sanitizes text before pasting"
-authors = ["iyasuh"]
+authors = ["Yasuhiro Inagawa"]
 license = "MIT"
-repository = ""
+repository = "https://github.com/YasuhiroInagawa/clipbuf"
 edition = "2024"
 rust-version = "1.85"
 

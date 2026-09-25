@@ -2,6 +2,9 @@
   "name": "clipbuf",
   "private": true,
   "version": "0.1.0",
+  "license": "MIT",
+  "author": "Yasuhiro Inagawa",
+  "repository": "https://github.com/YasuhiroInagawa/clipbuf",
   "type": "module",
   "scripts": {
     "dev": "vite",

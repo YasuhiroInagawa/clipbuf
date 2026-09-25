@@ -89,11 +89,12 @@
   "update.installing": "Downloading…",
   "update.failed": "The update could not be installed.",
   "about.title": "About clipbuf",
-  "about.tagline": "See, stop and fix what you are about to paste.",
   "about.version": "Version",
+  "about.author": "Author",
   "about.license": "Licence",
   "about.license.value": "MIT",
   "about.repository": "Open the repository",
   "about.privacy": "Captured items stay in memory: they are never written to disk or sent anywhere. The update check is the only network access.",
+  "about.issues": "Questions and bug reports go to the repository issues.",
   "about.close": "Close"
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { REPOSITORY_URL, type AboutApi } from '$lib/ipc/about';
+  import { AUTHOR, REPOSITORY_URL, type AboutApi } from '$lib/ipc/about';
   import { t } from '$lib/stores/i18n';
 
   interface Props {
@@ -28,16 +28,19 @@
 
 <main class="about">
   <h1>clipbuf</h1>
-  <p class="tagline">{$t('about.tagline')}</p>
 
   <dl class="facts">
     <dt>{$t('about.version')}</dt>
     <dd data-testid="version">{version ?? '—'}</dd>
+    <dt>{$t('about.author')}</dt>
+    <dd>{AUTHOR}</dd>
     <dt>{$t('about.license')}</dt>
     <dd>{$t('about.license.value')}</dd>
   </dl>
 
   <p class="privacy">{$t('about.privacy')}</p>
+  <!-- The only contact channel on purpose: no email address is published anywhere. -->
+  <p class="privacy">{$t('about.issues')}</p>
 
   <!-- A plain link would navigate the webview itself; the backend hands the URL to the
        browser instead, and the address is shown so it can be checked before clicking. -->
@@ -66,10 +69,6 @@
   h1 {
     margin: 0;
     font-size: 1.3em;
-  }
-  .tagline {
-    margin: -0.4em 0 0;
-    opacity: 0.8;
   }
   .facts {
     display: grid;
