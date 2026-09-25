@@ -215,7 +215,7 @@
   - 全 Rust テスト・全 Vitest・clippy・lint が通り、CI 3 ジョブが緑である
   - _Requirements: 1.1, 1.2, 1.4, 1.5, 1.8, 6.1, 6.5, 6.6, 7.4, 7.5, 7.6, 11.2_
 
-- [ ] 6.2 リリースワークフローを構築する
+- [x] 6.2 リリースワークフローを構築する
   - タグ `v*` で 3 OS の配布物（Windows は NSIS インストーラ、macOS は署名・公証済みアプリ、Linux は AppImage / deb / rpm）を生成し GitHub Releases に添付する
   - 更新用の署名と `latest.json` を生成する。Windows のコード署名は行わない
   - 各配布物の SHA-256 一覧と、Rust・npm 依存のライセンス一覧（THIRD-PARTY）を生成して添付する
@@ -223,7 +223,7 @@
   - _Depends: 1.3_
   - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.9_
 
-- [ ] 6.3 README とプラットフォーム確認チェックリストを整備する
+- [x] 6.3 README とプラットフォーム確認チェックリストを整備する
   - README に導入手順、Windows の SmartScreen 警告の回避手順、macOS のペーストボード許可の設定手順、Linux の Wayland 制約（GNOME 非対応、XWayland での限定動作）を記載する
   - `doc/platform-checklist.md` に Windows / Linux(X11, KDE Wayland, GNOME Wayland) / macOS の手動確認項目を列挙する
   - README と チェックリストがリポジトリに存在し、要件 11.5・13.4・13.10 の案内内容を含む

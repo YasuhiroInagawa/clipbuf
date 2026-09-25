@@ -192,6 +192,8 @@ python3 -m http.server 8787
 - ライセンス一覧は外部ツールを入れずに作れる。`cargo metadata --filter-platform <host>` の `resolve.nodes` を **normal 依存だけ**辿れば「実際に配布物へ入るクレート」になり、npm 側は lockfile の `dev` フラグで除外して各 `package.json` の `license` を読む（575 件 → 326 件に落ちた）
 - `resources` に `"../LICENSE"` のような相対パスを配列で書くと、バンドル内で `Resources/_up_/LICENSE` になる。`{"../LICENSE": "LICENSE"}` のマップ形式で配置先を明示する
 - AppImage は**ビルドした glibc より古い環境では起動しない**ので、リリースの Linux ジョブだけ `ubuntu-22.04` に固定した（CI は `ubuntu-latest` のまま）
+- **未登録のシークレットは「空文字」に展開される。「変数が無い」状態にはならない。** Apple の署名情報を `env:` に直書きしていたら、シークレット未登録の macOS ビルドが「署名せよ」と解釈して空の証明書をインポートしに行き、`failed codesign application: failed to run command security import` で落ちた。中身のあるものだけを `$GITHUB_ENV` に書き出す方式に変更
+- `latest.json` の `version` は**タグではなく `tauri.conf.json` の `version`** から来る。テストタグ `v0.0.0-test` でも中身は `0.1.0` になる
 - `THIRD-PARTY.md` はリポジトリにコミットしてある（バンドルされるリソースなので、無いとローカルビルドが失敗する）。ただし内容は**生成したプラットフォーム依存**で、リリースでは各 OS のジョブが生成し直す。手元で更新するときは `npm run licenses`
 
 ## 次回の再開手順（5.6 更新フローから）

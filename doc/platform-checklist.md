@@ -103,6 +103,8 @@
 
 ## リリース前
 
+- [ ] `src-tauri/tauri.conf.json` の `version` を上げてからタグを打つ。`latest.json` の `version` は
+      **タグではなくこの設定ファイル**から来るので、上げ忘れると誰にも更新が届かない
 - [ ] `README.md` と `README.ja.md` の内容が揃っている（片方だけ更新して放置していない）
 - [ ] CI の 3 ジョブが緑（6.1）
 - [ ] ドラフトリリースに 3 OS の配布物、`latest.json`、`SHA256SUMS.txt`、`THIRD-PARTY.md` が揃っている
