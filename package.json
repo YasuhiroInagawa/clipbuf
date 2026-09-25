@@ -13,6 +13,7 @@
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
+    "licenses": "node scripts/third-party.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "tauri": "tauri"

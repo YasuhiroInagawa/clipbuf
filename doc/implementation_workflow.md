@@ -184,6 +184,16 @@ python3 -m http.server 8787
 「新しいバージョン番号に古い配布物を貼り付ける」改竄を防いでいる。最初この仕組みを知らずに
 0.1.0 のビルドを 0.1.1 として配り、ダウンロードだけ走ってインストールされない状態を作ってしまった
 
+### 6.2 リリースワークフロー
+- `createUpdaterArtifacts: true` が入っている以上、**`TAURI_SIGNING_PRIVATE_KEY` が無いとリリースビルドは失敗する**（バンドル自体は出来たあと、署名段階でエラー終了）。Apple の署名・公証用シークレットは無くても通る（未署名になるだけ）
+- ドラフトリリースは**タグから引けない**（タグがまだリポジトリに存在しないため）。`gh release view/upload` ではなく **release id で API を叩く**必要がある
+- 3 OS 並列で `tauri-action` に同じリリースを触らせるとレースになるので、先に draft を作る単独ジョブを置き、各ビルドには `releaseId` を渡す
+- シェルの `[ "$a" = "$b" ] && continue` は、条件が偽のとき終了ステータス 1 になる。`set -e` 下のループ内だとそこで全体が止まる。`if ... then continue; fi` で書く
+- ライセンス一覧は外部ツールを入れずに作れる。`cargo metadata --filter-platform <host>` の `resolve.nodes` を **normal 依存だけ**辿れば「実際に配布物へ入るクレート」になり、npm 側は lockfile の `dev` フラグで除外して各 `package.json` の `license` を読む（575 件 → 326 件に落ちた）
+- `resources` に `"../LICENSE"` のような相対パスを配列で書くと、バンドル内で `Resources/_up_/LICENSE` になる。`{"../LICENSE": "LICENSE"}` のマップ形式で配置先を明示する
+- AppImage は**ビルドした glibc より古い環境では起動しない**ので、リリースの Linux ジョブだけ `ubuntu-22.04` に固定した（CI は `ubuntu-latest` のまま）
+- `THIRD-PARTY.md` はリポジトリにコミットしてある（バンドルされるリソースなので、無いとローカルビルドが失敗する）。ただし内容は**生成したプラットフォーム依存**で、リリースでは各 OS のジョブが生成し直す。手元で更新するときは `npm run licenses`
+
 ## 次回の再開手順（5.6 更新フローから）
 
 1. アプリ起動（ユーザー側のターミナルで）

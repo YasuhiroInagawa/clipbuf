@@ -24,7 +24,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'scripts/**/*.test.mjs'],
     // Pure modules run in node; component tests opt into jsdom with `@vitest-environment jsdom`.
     environment: 'node',
     // Component styles are applied so visibility assertions (always-visible buttons) are real.
