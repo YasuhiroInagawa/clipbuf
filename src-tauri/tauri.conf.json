@@ -43,6 +43,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Yasuhiro Inagawa",
     "createUpdaterArtifacts": true,
     "resources": {
       "../LICENSE": "LICENSE",
