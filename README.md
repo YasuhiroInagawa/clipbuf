@@ -128,6 +128,8 @@ cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings &
 
 `npm run licenses` refreshes the third-party licence list. The manual checks that the automated
 suite cannot cover are in [doc/platform-checklist.md](doc/platform-checklist.md).
+clipbuf has only been verified by hand on macOS so far; [doc/verification-handoff.md](doc/verification-handoff.md)
+is what to read before checking it on Windows or Linux.
 
 ## Licence
 

@@ -122,6 +122,8 @@ cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings &
 
 依存ライブラリのライセンス一覧を更新するには `npm run licenses` を実行します。手動確認の項目は
 [doc/platform-checklist.md](doc/platform-checklist.md) にあります。
+実機での確認は現時点で macOS のみです。Windows / Linux で確認する際は
+[doc/verification-handoff.md](doc/verification-handoff.md) を先に読んでください。
 
 ## ライセンス
 
