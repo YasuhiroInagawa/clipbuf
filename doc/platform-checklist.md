@@ -75,6 +75,11 @@
 - [ ] タスクバーに clipbuf のボタンが出ない（常駐アプリとして邪魔をしない）
 - [ ] コマンドプロンプトからのコピー（CRLF）が正しく色分けされる
 - [ ] アンインストール後、設定ファイルの残骸を確認する
+      - Tauri の NSIS テンプレートには「確認」画面に **"Delete the application data"** という
+        チェックボックスが標準で付いている（既定は未チェック）。チェックを入れて
+        アンインストールすると `%APPDATA%\jp.gr.mac.iyas.clipbuf` と
+        `%LOCALAPPDATA%\jp.gr.mac.iyas.clipbuf`（`settings.json`・WebView2 のプロファイル）
+        が削除される。チェックを入れずに残っているのは想定通りの挙動
 
 ## macOS
 
