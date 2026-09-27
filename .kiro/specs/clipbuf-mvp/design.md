@@ -46,7 +46,7 @@
 - コード署名証明書・Apple Developer アカウントの管理（CI の secrets として与えられる前提）
 
 ### Allowed Dependencies
-- Tauri 2 本体と公式プラグイン: global-shortcut, autostart, updater, single-instance, window-state
+- Tauri 2 本体と公式プラグイン: global-shortcut, autostart, updater, single-instance, window-state, process（更新適用後の再起動）, opener（About のリポジトリリンクを既定のブラウザで開く）
 - クリップボード: `clipboard-rs`（Windows / macOS / Linux X11・Wayland。Wayland は `wayland` feature で `wl-clipboard-rs` の data-control を使用）
 - macOS の許可状態確認: `objc2-app-kit`（`NSPasteboard.accessBehavior` のみ）
 - 文字処理: `encoding_rs`（Shift_JIS 判定）、`unicode-normalization`（NFC/NFD 判定）
@@ -169,11 +169,13 @@ clipbuf/
 │       │   ├── conceal.rs              # 秘匿マーク形式名の一覧と判定
 │       │   ├── clipboard_rs.rs         # ClipboardRsAdapter（Windows / macOS / X11）
 │       │   ├── macos_access.rs         # accessBehavior 確認（cfg(target_os = "macos")）
+│       │   ├── unavailable.rs          # アダプタが選べない環境向けの何もしない実装
 │       │   └── fake.rs                 # テスト用 FakeClipboard（cfg(test)）
 │       ├── settings/
 │       │   └── mod.rs                  # SettingsStore（load / save / apply 差分通知）
 │       └── app/
 │           ├── mod.rs                  # bootstrap(): 状態生成、アダプタ選択、監視開始、tray/hotkey 登録
+│           ├── autostart.rs            # ログイン時起動の有効・無効（プラグイン越し、フェイク可）
 │           ├── state.rs                # AppState（Mutex<Buffer>, SettingsStore, Box<dyn ClipboardPort>, LastWrite）
 │           ├── capture.rs              # CaptureService: 監視イベント → フィルタ → analyze → buffer → emit
 │           ├── ops.rs                  # コマンドのロジック（Tauri 非依存、フェイクでテスト）
@@ -185,17 +187,23 @@ clipbuf/
 │           └── platform.rs             # PlatformInfo（OS、Wayland/X11、取り込み可否）
 ├── src/
 │   ├── main.ts                         # Svelte マウント
-│   ├── App.svelte                      # ウィンドウラベルで MainWindow / SettingsWindow を切替
+│   ├── App.svelte                      # ラベルで MainWindow / SettingsWindow / AboutWindow を切替
 │   ├── lib/
+│   │   ├── app.ts                      # 実 IPC を store に配線（コンポーネントからは import しない）
 │   │   ├── ipc/
 │   │   │   ├── commands.ts             # invoke ラッパー（型付き）
 │   │   │   ├── events.ts               # listen ラッパー（型付き）
-│   │   │   └── types.ts                # ItemDto, Settings, TransferOutcome, AppError, Warning（Rust と同形）
+│   │   │   ├── types.ts                # ItemDto, Settings, TransferOutcome, AppError, Warning（Rust と同形）
+│   │   │   ├── window.ts               # 自ウィンドウのラベル取得
+│   │   │   ├── update.ts               # 更新確認・適用・再起動
+│   │   │   └── about.ts                # バージョン取得、リポジトリを開く、About を閉じる
 │   │   ├── stores/
 │   │   │   ├── items.ts                # 項目一覧（event で更新）
 │   │   │   ├── selection.ts            # 選択中 ItemId、キーボード移動
 │   │   │   ├── settings.ts             # Settings の写しと更新
-│   │   │   └── i18n.ts                 # t(key)、言語切替
+│   │   │   ├── i18n.ts                 # t(key)、言語切替
+│   │   │   ├── notice.ts               # 一時通知のキュー
+│   │   │   └── context.ts              # メインウィンドウが使う store 一式（テストでフェイク差し替え）
 │   │   ├── preview/
 │   │   │   ├── tokenize.ts             # text -> PreviewToken[]（上限 20,000 文字）
 │   │   │   └── charset.ts              # 不可視文字の分類表（Rust の charset.rs と同内容）
@@ -209,6 +217,7 @@ clipbuf/
 │   │       ├── FullTextPreview.svelte  # ホバー時の全文プレビュー（変換適用後、改行を反映）
 │   │       ├── Notice.svelte           # 一時通知（転送完了、変換未適用、失敗、取り込み不可）
 │   │       ├── UpdatePrompt.svelte     # 更新の通知と承諾
+│   │       ├── AboutWindow.svelte      # バージョン・作者・ライセンス・リポジトリ（8.8, 8.9）
 │   │       └── SettingsWindow.svelte   # 設定フォーム
 │   └── locales/
 │       ├── ja.json
@@ -216,12 +225,17 @@ clipbuf/
 ├── tests/e2e/                          # @wdio/tauri-service（任意。CI Linux で実行）
 ├── .github/workflows/
 │   ├── ci.yml                          # push/PR: 3 OS で lint, test, cargo build
-│   └── release.yml                     # tag v*: tauri-action、署名・公証、latest.json、SHA256SUMS、THIRD-PARTY
-├── about.toml                          # cargo-about 設定
+│   └── release.yml                     # tag v*: draft 作成 → 3 OS ビルド → SHA256SUMS / THIRD-PARTY 添付
+├── scripts/
+│   ├── third-party.mjs                 # cargo metadata + lockfile から THIRD-PARTY.md を生成
+│   └── macos-concealed-copy.swift      # 秘匿マーク付きコピーの手動確認用（macOS）
+├── LICENSE                             # MIT
+├── THIRD-PARTY.md                      # 生成物。配布物にも同梱する
 ├── doc/
 │   ├── initial_brief.md
 │   └── platform-checklist.md           # Windows / Linux(X11, Wayland) / macOS の手動確認項目
-└── README.md                           # 導入、SmartScreen 回避、macOS 許可、Wayland 制約
+├── README.md                           # 英語。導入、SmartScreen 回避、macOS 許可、Wayland 制約
+└── README.ja.md                        # 同内容の日本語版
 ```
 
 ### Modified Files
@@ -386,6 +400,8 @@ flowchart TD
 | 8.5 | 閉じる＝非表示 | window（CloseRequested を prevent） | — | — |
 | 8.6 | 位置・サイズ復元 | window-state plugin | — | — |
 | 8.7 | リサイズ可 | tauri.conf（resizable, minWidth/minHeight） | — | — |
+| 8.8 | トレイから About を開く | tray, window::open_about, AboutWindow | close_about, getVersion | — |
+| 8.9 | リポジトリリンクは既定のブラウザで開く | AboutWindow, opener プラグイン | openUrl（URL スコープ付き） | — |
 | 9.1 | 設定項目 | SettingsWindow, Settings | get_settings / set_settings | — |
 | 9.2 | 設定の永続化 | SettingsStore | — | — |
 | 9.3 | 再起動なしで反映 | SettingsStore.apply → hotkey / Buffer / autostart / i18n | settings-changed | — |
