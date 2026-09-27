@@ -96,5 +96,11 @@
   "about.repository": "リポジトリを開く",
   "about.privacy": "取り込んだ項目はメモリ上にのみ保持され、ディスクにも外部にも出ません。ネットワーク通信は更新確認だけです。",
   "about.issues": "質問・不具合報告はリポジトリの Issues へお願いします。",
-  "about.close": "閉じる"
+  "about.close": "閉じる",
+  "tray.toggle": "表示 / 非表示",
+  "tray.settings": "設定…",
+  "tray.about": "clipbuf について",
+  "tray.quit": "clipbuf を終了",
+  "window.settings.title": "clipbuf - 設定",
+  "window.about.title": "clipbuf について"
 }

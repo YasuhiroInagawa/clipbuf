@@ -17,6 +17,20 @@ describe('resolveInitialLanguage', () => {
     expect(resolveInitialLanguage(null, 'de')).toBe('en');
     expect(resolveInitialLanguage(null, '')).toBe('en');
   });
+
+  // The tray menu and the window titles are rendered by Rust, which resolves the language
+  // itself in `app::i18n::resolve_language`. The two must agree, or the tray would say one
+  // thing and the window another; these are the cases that side asserts too.
+  it('agrees with the Rust side on every case it tests', () => {
+    for (const locale of ['ja', 'ja_JP.UTF-8', 'JA-JP']) {
+      expect(resolveInitialLanguage(null, locale)).toBe('ja');
+    }
+    for (const locale of ['en_US', 'de_DE', 'zh_CN', 'ko_KR', 'fr', '']) {
+      expect(resolveInitialLanguage(null, locale)).toBe('en');
+    }
+    expect(resolveInitialLanguage('en', 'ja_JP.UTF-8')).toBe('en');
+    expect(resolveInitialLanguage('ja', 'en_US')).toBe('ja');
+  });
 });
 
 describe('locales', () => {

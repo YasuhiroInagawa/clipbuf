@@ -96,5 +96,11 @@
   "about.repository": "Open the repository",
   "about.privacy": "Captured items stay in memory: they are never written to disk or sent anywhere. The update check is the only network access.",
   "about.issues": "Questions and bug reports go to the repository issues.",
-  "about.close": "Close"
+  "about.close": "Close",
+  "tray.toggle": "Show / Hide",
+  "tray.settings": "Settings…",
+  "tray.about": "About clipbuf",
+  "tray.quit": "Quit clipbuf",
+  "window.settings.title": "clipbuf - Settings",
+  "window.about.title": "clipbuf - About"
 }

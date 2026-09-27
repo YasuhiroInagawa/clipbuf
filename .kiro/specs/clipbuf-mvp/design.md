@@ -50,6 +50,7 @@
 - クリップボード: `clipboard-rs`（Windows / macOS / Linux X11・Wayland。Wayland は `wayland` feature で `wl-clipboard-rs` の data-control を使用）
 - macOS の許可状態確認: `objc2-app-kit`（`NSPasteboard.accessBehavior` のみ）
 - 文字処理: `encoding_rs`（Shift_JIS 判定）、`unicode-normalization`（NFC/NFD 判定）
+- OS ロケール取得: `sys-locale`（ネイティブ UI の言語決定のみ）
 - Frontend: Svelte 5, Vite, TypeScript, Vitest
 - 依存の向き（違反は設計違反として扱う）:
   `model` → `analysis` / `transform` / `buffer` → `clipboard` / `settings` → `app`（runtime: state, capture, commands, tray, window, hotkey） → frontend
@@ -176,12 +177,13 @@ clipbuf/
 │       └── app/
 │           ├── mod.rs                  # bootstrap(): 状態生成、アダプタ選択、監視開始、tray/hotkey 登録
 │           ├── autostart.rs            # ログイン時起動の有効・無効（プラグイン越し、フェイク可）
+│           ├── i18n.rs                # トレイとウィンドウタイトルの翻訳（locales/*.json を include_str!）
 │           ├── state.rs                # AppState（Mutex<Buffer>, SettingsStore, Box<dyn ClipboardPort>, LastWrite）
 │           ├── capture.rs              # CaptureService: 監視イベント → フィルタ → analyze → buffer → emit
 │           ├── ops.rs                  # コマンドのロジック（Tauri 非依存、フェイクでテスト）
 │           ├── commands.rs             # #[tauri::command] 群（ops への薄い委譲。関数名 = コマンド名）
 │           ├── events.rs               # イベント名定数と payload 型
-│           ├── tray.rs                 # トレイメニュー
+│           ├── tray.rs                 # トレイメニュー（言語変更で再構築）
 │           ├── window.rs               # 表示切替、close→hide、settings ウィンドウ生成、activation policy
 │           ├── hotkey.rs               # ホットキー登録・再登録・失敗時の維持
 │           └── platform.rs             # PlatformInfo（OS、Wayland/X11、取り込み可否）
@@ -425,6 +427,7 @@ flowchart TD
 | 12.1 | 日英 UI | locales, i18n store | — | — |
 | 12.2 | 初回 OS 日本語→日本語 | i18n store（navigator.language） | Settings.language = None | — |
 | 12.3 | 初回それ以外→英語 | i18n store | — | — |
+| 12.5 | トレイとウィンドウタイトルも設定言語で表示 | app::i18n, tray, window | include_str! した locales/*.json | — |
 | 12.4 | 設定で上書き | SettingsWindow, i18n store | Settings.language | — |
 | 13.1 | 3 OS 配布物 | release.yml, tauri.conf bundle | — | — |
 | 13.2 | CI で生成 | release.yml | — | — |

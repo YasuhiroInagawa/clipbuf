@@ -9,6 +9,7 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 use super::events::{EventSink, TauriSink};
+use super::i18n;
 
 pub const MAIN: &str = "main";
 pub const SETTINGS: &str = "settings";
@@ -115,13 +116,8 @@ pub fn install_close_to_hide(app: &AppHandle) {
 
 /// Open the settings window from the tray menu (9.1).
 pub fn open_settings(app: &AppHandle) -> tauri::Result<()> {
-    open_secondary(
-        app,
-        SETTINGS,
-        "clipbuf - Settings",
-        SETTINGS_SIZE,
-        (400.0, 400.0),
-    )
+    let title = i18n::t(current_language(app), i18n::WINDOW_SETTINGS_TITLE);
+    open_secondary(app, SETTINGS, title, SETTINGS_SIZE, (400.0, 400.0))
 }
 
 /// Close the settings window after a successful save (9.7). Re-opening builds a fresh one,
@@ -132,7 +128,17 @@ pub fn close_settings(app: &AppHandle) -> tauri::Result<()> {
 
 /// Open the about window from the tray menu (8.8).
 pub fn open_about(app: &AppHandle) -> tauri::Result<()> {
-    open_secondary(app, ABOUT, "clipbuf - About", ABOUT_SIZE, (320.0, 280.0))
+    let title = i18n::t(current_language(app), i18n::WINDOW_ABOUT_TITLE);
+    open_secondary(app, ABOUT, title, ABOUT_SIZE, (320.0, 280.0))
+}
+
+/// The language the native UI should use (12.1, 12.4): the stored setting, else the OS locale.
+/// A window opened before the state exists still gets a sensible title.
+fn current_language(app: &AppHandle) -> crate::model::Language {
+    let setting = app
+        .try_state::<super::commands::SharedState>()
+        .and_then(|state| state.settings.get().language);
+    i18n::current(setting)
 }
 
 pub fn close_about(app: &AppHandle) -> tauri::Result<()> {

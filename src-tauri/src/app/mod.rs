@@ -5,6 +5,7 @@ pub mod capture;
 pub mod commands;
 pub mod events;
 pub mod hotkey;
+pub mod i18n;
 pub mod ops;
 pub mod platform;
 pub mod state;
@@ -70,7 +71,8 @@ pub fn bootstrap(app: &AppHandle) -> Result<(), AppError> {
     window::apply_activation_policy(app);
     window::reassert_always_on_top(app);
     window::install_close_to_hide(app);
-    if let Err(e) = tray::install(app) {
+    let language = i18n::current(state.settings.get().language);
+    if let Err(e) = tray::install(app, language) {
         log::warn!("tray: not installed: {e}");
     }
     let hotkeys = HotkeyState::default();

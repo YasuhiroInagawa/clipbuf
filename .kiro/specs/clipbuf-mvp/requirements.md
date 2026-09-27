@@ -194,6 +194,7 @@ clipbuf は、デスクトップ（Windows / macOS / Linux）でアプリ間の�
 2. When 初回起動時に OS の言語が日本語である, the clipbuf shall 日本語 UI で起動する
 3. When 初回起動時に OS の言語が日本語以外である, the clipbuf shall 英語 UI で起動する
 4. When ユーザーが設定で UI 言語を選択する, the clipbuf shall OS の言語にかかわらず選択された言語で表示する
+5. The clipbuf shall トレイメニューとウィンドウタイトルも選択された言語で表示する
 
 ### Requirement 13: 配布と更新
 **Objective:** As a ユーザー（および配布者）, I want 各 OS 向けの配布物を GitHub から取得して安全に導入・更新できること, so that 無料ツールとして継続的に使える

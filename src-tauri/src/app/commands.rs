@@ -67,14 +67,17 @@ pub fn set_settings(
     hotkeys: State<'_, HotkeyState>,
     settings: Settings,
 ) -> Result<Settings, AppError> {
-    ops::apply_settings(
+    let applied = ops::apply_settings(
         &state,
         &hotkeys,
         &PluginRegistrar(app.clone()),
         &PluginAutostart(app.clone()),
-        &TauriSink(app),
+        &TauriSink(app.clone()),
         settings,
-    )
+    )?;
+    // The tray labels are native, so they do not follow the webview's language store (12.4).
+    super::tray::refresh(&app, super::i18n::current(applied.language));
+    Ok(applied)
 }
 
 #[tauri::command]
