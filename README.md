@@ -90,10 +90,10 @@ clipboard, which a compositor has to allow for a window that is not focused.
 | X11 | Everything |
 | KDE Plasma (Wayland) | Everything, through `wlr-data-control` |
 | Sway and other wlroots compositors | Same |
-| GNOME (Wayland) | **Nothing but XWayland.** GNOME does not implement `wlr-data-control` |
+| GNOME (Wayland) | **May miss native Wayland apps.** GNOME does not implement `wlr-data-control`, so clipbuf falls back to X11 |
 
 Under GNOME on Wayland, clipbuf says so in a banner at the top of the window. Log in to an X11
-session instead if you need to capture from every application.
+session instead if you need to capture from every application reliably.
 
 ## Updates
 

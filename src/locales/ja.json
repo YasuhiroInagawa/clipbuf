@@ -35,7 +35,7 @@
   "notice.writeFailed": "クリップボードへ書き込めませんでした",
   "notice.readFailed": "クリップボードの読み取りに失敗しています",
   "capture.unavailable": "このセッションではクリップボードを利用できないため、取り込みできません。",
-  "capture.limitedXWayland": "Wayland で data-control が使えないため、X11/XWayland アプリからのコピーのみ取り込みます。",
+  "capture.limitedXWayland": "Wayland で data-control が使えないため、ネイティブ Wayland アプリのコピーは取り込めないことがあります。",
   "capture.denied": "クリップボードへのアクセスが拒否されています。システム設定 › プライバシーとセキュリティ › ペーストボードで clipbuf を許可してください。",
   "settings.title": "設定",
   "settings.capacity": "保持件数",

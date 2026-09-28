@@ -35,7 +35,7 @@
   "notice.writeFailed": "Could not write to the clipboard",
   "notice.readFailed": "Clipboard reads keep failing",
   "capture.unavailable": "No clipboard is available in this session; nothing can be captured.",
-  "capture.limitedXWayland": "Wayland without data-control: only copies from X11/XWayland apps are captured.",
+  "capture.limitedXWayland": "Wayland without data-control: copies from native Wayland apps may not be captured.",
   "capture.denied": "Clipboard access is denied. Allow clipbuf under System Settings › Privacy & Security › Pasteboard.",
   "settings.title": "Settings",
   "settings.capacity": "Items to keep",

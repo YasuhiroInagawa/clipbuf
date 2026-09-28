@@ -84,11 +84,11 @@ sudo dpkg -i clipbuf_x.y.z_amd64.deb
 | X11 | 全アプリから取り込めます |
 | KDE Plasma (Wayland) | `wlr-data-control` に対応しているため取り込めます |
 | Sway / wlroots 系 (Wayland) | 同上 |
-| GNOME (Wayland) | **取り込めません。** `wlr-data-control` を実装していないため、XWayland アプリからのコピーのみ取り込みます |
+| GNOME (Wayland) | **ネイティブ Wayland アプリのコピーは取り込めないことがあります。** `wlr-data-control` を実装していないため、X11 にフォールバックします |
 
-GNOME Wayland では、clipbuf が「Wayland で data-control が使えないため、X11/XWayland アプリからの
-コピーのみ取り込みます」とウィンドウ上部に表示します。全アプリから取り込みたい場合は、ログイン画面で
-X11 セッションを選択してください。
+GNOME Wayland では、clipbuf が「Wayland で data-control が使えないため、ネイティブ Wayland アプリの
+コピーは取り込めないことがあります」とウィンドウ上部に表示します。確実に全アプリから取り込みたい場合は、
+ログイン画面で X11 セッションを選択してください。
 
 ## 更新
 
