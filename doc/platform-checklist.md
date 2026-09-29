@@ -23,7 +23,7 @@
 | Windows | 実機。CI がビルドした NSIS インストーラとアンインストーラ |
 | Linux | GNOME (Wayland) の VM。CI がビルドした AppImage |
 | 未確認の環境 | Intel Mac、X11、KDE Plasma (Wayland)、deb / rpm |
-| 確認できなかった項目 | SmartScreen の警告（検証機のサードパーティ製 AV が Defender を置き換えていた）、署名済みビルドでの Gatekeeper（未署名のため） |
+| 確認できなかった項目 | SmartScreen の警告（検証機のサードパーティ製 AV が Defender を置き換えていた） |
 
 ## 全 OS 共通
 
@@ -115,7 +115,9 @@
 
 ## macOS
 
-- [ ] dmg から起動 → **Gatekeeper の警告が出ない**（署名・公証済み。未署名ビルドでは出る）（13.3）
+- [ ] dmg から起動 → **「開発元を確認できない」の警告が出る**（署名しない方針、13.3）。README の
+      手順（システム設定 › プライバシーとセキュリティ › このまま開く）でそのあと起動できる
+- [ ] 一度許可したあとは警告なしに起動する。更新を適用したあとも再度聞かれない
 - [ ] Apple Silicon と Intel の両方で起動する（universal バイナリ）
 - [x] Dock にアイコンが出ず、メニューバーにだけ常駐する（8.4）（`lsappinfo` が `type="UIElement"` を報告）
 - [ ] クリップボード読み取りが拒否される環境 → 「システム設定 › プライバシーとセキュリティ ›

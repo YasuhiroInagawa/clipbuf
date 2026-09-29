@@ -9,13 +9,13 @@ name: Release
 #                                       artifacts (13.7). `createUpdaterArtifacts` is on, so
 #                                       the bundler fails outright when the key is missing.
 #   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  its passphrase, empty string when it has none
-# The Apple secrets are optional; without them the macOS build is unsigned and un-notarised,
-# which is fine for a test tag but not for a real release (13.3):
+# macOS is deliberately not signed either (13.3), for the same reason as Windows, so these are
+# expected to be unset. They are kept so that decision can be revisited without rework:
 #   APPLE_CERTIFICATE                   base64 of the Developer ID Application .p12
 #   APPLE_CERTIFICATE_PASSWORD          its passphrase
 #   APPLE_SIGNING_IDENTITY              e.g. "Developer ID Application: Name (TEAMID)"
 #   APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID   notarisation (app-specific password)
-# Windows is deliberately not code signed (13.4); the README explains the SmartScreen prompt.
+# Neither Windows nor macOS is code signed (13.3, 13.4); both READMEs explain what the OS asks.
 
 on:
   push:
@@ -151,7 +151,7 @@ jobs:
             fi
           done
           if [ "$configured" -eq 0 ]; then
-            echo "::warning::No Apple signing secrets are set, so this macOS build is neither signed nor notarised (13.3)."
+            echo "::notice::No Apple signing secrets are set: the macOS build is unsigned, which is the decided policy (13.3). The plumbing is kept in case that changes."
           fi
 
       - uses: tauri-apps/tauri-action@v0

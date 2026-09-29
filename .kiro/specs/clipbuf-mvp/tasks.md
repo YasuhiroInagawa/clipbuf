@@ -216,7 +216,7 @@
   - _Requirements: 1.1, 1.2, 1.4, 1.5, 1.8, 6.1, 6.5, 6.6, 7.4, 7.5, 7.6, 11.2_
 
 - [x] 6.2 リリースワークフローを構築する
-  - タグ `v*` で 3 OS の配布物（Windows は NSIS インストーラ、macOS は署名・公証済みアプリ、Linux は AppImage / deb / rpm）を生成し GitHub Releases に添付する
+  - タグ `v*` で 3 OS の配布物（Windows は NSIS インストーラ、macOS は universal アプリ + dmg、Linux は AppImage / deb / rpm）を生成し GitHub Releases に添付する。コード署名はどちらの OS でも行わない
   - 更新用の署名と `latest.json` を生成する。Windows のコード署名は行わない
   - 各配布物の SHA-256 一覧と、Rust・npm 依存のライセンス一覧（THIRD-PARTY）を生成して添付する
   - テストタグでドラフトリリースが作成され、上記の資産がすべて揃っている

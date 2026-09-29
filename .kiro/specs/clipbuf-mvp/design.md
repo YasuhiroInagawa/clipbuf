@@ -43,7 +43,7 @@
 - 秘匿マークの付与（パスワードマネージャ側の責務。clipbuf は検出のみ）
 - macOS のペーストボード許可の取得（ユーザー操作。clipbuf は案内のみ）
 - Wayland コンポジタが data-control を提供しない場合の回避策
-- コード署名証明書・Apple Developer アカウントの管理（CI の secrets として与えられる前提）
+- コード署名（Windows / macOS のいずれも行わない。理由は要件 13.3, 13.4 と README に記載）
 
 ### Allowed Dependencies
 - Tauri 2 本体と公式プラグイン: global-shortcut, autostart, updater, single-instance, window-state, process（更新適用後の再起動）, opener（About のリポジトリリンクを既定のブラウザで開く）
@@ -131,7 +131,7 @@ graph TB
 | Hotkey / Autostart | `tauri-plugin-global-shortcut`、`tauri-plugin-autostart` | 表示切替、ログイン時起動 | |
 | Single instance | `tauri-plugin-single-instance` | 二重起動時は既存ウィンドウを表示 | |
 | Update | `tauri-plugin-updater` | GitHub Releases の `latest.json` から承諾制で更新 | minisign 署名 |
-| CI / Release | GitHub Actions + `tauri-action` | 3 OS ビルド、署名・公証、成果物添付 | `cargo-about` で THIRD-PARTY 生成 |
+| CI / Release | GitHub Actions + `tauri-action` | 3 OS ビルド、成果物添付（コード署名はしない） | `scripts/third-party.mjs` で THIRD-PARTY 生成 |
 
 ## File Structure Plan
 
@@ -431,7 +431,7 @@ flowchart TD
 | 12.4 | 設定で上書き | SettingsWindow, i18n store | Settings.language | — |
 | 13.1 | 3 OS 配布物 | release.yml, tauri.conf bundle | — | — |
 | 13.2 | CI で生成 | release.yml | — | — |
-| 13.3 | macOS 署名・公証 | release.yml（secrets） | — | — |
+| 13.3 | macOS 未署名 + README | release.yml（Apple secrets は未設定のまま）, README | — | — |
 | 13.4 | Windows 未署名 + README | release.yml, README | — | — |
 | 13.5 | SHA-256 併記 | release.yml | — | — |
 | 13.6 | 起動時に更新確認・通知 | UpdatePrompt, updater plugin | — | — |
@@ -867,7 +867,7 @@ export function tokenize(text: string): { tokens: PreviewToken[]; truncated: boo
 **Contracts**: Batch [x]
 
 - `ci.yml`: trigger = push / pull_request。matrix = ubuntu-latest, windows-latest, macos-latest。steps = Linux 依存インストール（webkit2gtk-4.1, gtk3, ayatana-appindicator3, librsvg2, libxcb 系）→ `npm ci` → `npm run lint` → `npm test` → `cargo fmt --check` → `cargo clippy -- -D warnings` → `cargo test` → `cargo build`
-- `release.yml`: trigger = tag `v*`。`tauri-action` で 3 OS ビルド。macOS は `APPLE_CERTIFICATE` 等の secrets で署名・公証。updater は `TAURI_SIGNING_PRIVATE_KEY` で署名し `latest.json` を生成。Windows は署名なし（NSIS のみ）。Linux は AppImage / deb / rpm。追加 step で `SHA256SUMS.txt` と `THIRD-PARTY.md`（`cargo-about` + npm ライセンス抽出）を生成して添付
+- `release.yml`: trigger = tag `v*`。`tauri-action` で 3 OS ビルド。macOS は署名しない（13.3。Apple secrets の受け口だけ残してある）。updater は `TAURI_SIGNING_PRIVATE_KEY` で署名し `latest.json` を生成。Windows は署名なし（NSIS のみ）。Linux は AppImage / deb / rpm。追加 step で `SHA256SUMS.txt` と `THIRD-PARTY.md`（`scripts/third-party.mjs`）を生成して添付
 - Idempotency: 同一タグの再実行は既存 Release の資産を上書き
 
 ## Data Models
@@ -925,7 +925,7 @@ export function tokenize(text: string): { tokens: PreviewToken[]; truncated: boo
 ### Manual Platform Checklist（`doc/platform-checklist.md`）
 - 各 OS で: 他アプリからのコピーが 1 秒以内に出る（1.8）、書式付きコピーで「スタイルあり」（5.1）、パスワードマネージャからのコピーが出ない（1.5）、転送後に貼り付け先で期待どおり（6.x）、ホットキー・トレイ・閉じる＝非表示（8.x）、自動起動で非表示起動（9.5）
 - Linux: X11、KDE Wayland、GNOME Wayland（非対応通知）（11.3–11.5）
-- macOS: 許可を「拒否」にした状態で案内が出る（11.6）、公証済みで警告なしに起動（13.3）
+- macOS: 許可を「拒否」にした状態で案内が出る（11.6）、未署名の警告が出て README の手順で起動できる（13.3）
 - Windows: SmartScreen 警告の回避手順どおりに導入できる（13.4）
 
 ## Security Considerations

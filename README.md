@@ -59,8 +59,28 @@ Get-FileHash .\clipbuf_x.y.z_x64-setup.exe -Algorithm SHA256
 ### macOS
 
 Open `clipbuf_x.y.z_universal.dmg` and drag clipbuf to Applications. It is a universal binary, so
-it runs natively on both Apple Silicon and Intel. The app is signed and notarised, so it starts
-without a Gatekeeper warning.
+it runs natively on both Apple Silicon and Intel.
+
+**macOS will refuse to open it the first time**, saying it cannot verify the developer. clipbuf is
+not signed with an Apple Developer ID, for the same reason the Windows installer is not code
+signed: a yearly membership is more than a free tool from one person can justify. The build is
+reproducible from this repository and every release lists the SHA-256 of each file, which is what
+is offered instead of a signature.
+
+To open it anyway, on macOS 15 and later:
+
+1. Try to open clipbuf once and dismiss the warning
+2. **System Settings › Privacy & Security**, scroll down to the message about clipbuf
+3. Click **Open Anyway**
+
+On older macOS versions, Control-clicking the app and choosing **Open** is enough.
+
+Once allowed, clipbuf starts normally from then on, and updates it installs itself do not ask
+again. If you would rather check the download first, compare it against `SHA256SUMS.txt`:
+
+```bash
+shasum -a 256 ~/Downloads/clipbuf_x.y.z_universal.dmg
+```
 
 **If nothing is captured, macOS is withholding the clipboard.** clipbuf then says so, and you can
 allow it:

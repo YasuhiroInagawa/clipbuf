@@ -202,7 +202,7 @@ clipbuf は、デスクトップ（Windows / macOS / Linux）でアプリ間の�
 #### Acceptance Criteria
 1. The clipbuf shall Windows 向けインストーラ、macOS 向けアプリ、Linux 向けパッケージ（AppImage / .deb / .rpm）を GitHub Releases で配布する
 2. The clipbuf shall リリース用の配布物を継続的インテグレーションで自動生成し、手元でビルドした配布物を使わない
-3. The clipbuf shall macOS 向け配布物に開発者署名と公証を施し、ユーザーが警告なしに起動できるようにする
+3. The clipbuf shall macOS 向け配布物に開発者署名と公証を施さず、初回起動時の警告の回避手順を README に記載する
 4. The clipbuf shall Windows 向け配布物にコード署名を施さず、起動時の警告の回避手順を README に記載する
 5. The clipbuf shall 各配布物の SHA-256 ハッシュをリリースに併記する
 6. When clipbuf が起動する, the clipbuf shall 新しいバージョンの有無を確認し、あればユーザーに通知する
