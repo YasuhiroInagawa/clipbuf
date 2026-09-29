@@ -50,8 +50,8 @@ Wayland↔X11 のクリップボードを橋渡ししているため）。「X11
 
 **Linux**
 
-- アダプタ選択が正しいか（X11 か Wayland の data-control か）。`設定` に「ポーリング間隔」が
-  出るかどうかで判別できる（Wayland なら出る、X11 なら出ない）
+- アダプタ選択が正しいか（X11 か Wayland の data-control か）。設定の
+  「クリップボード確認間隔（ms）」が出るかどうかで判別できる（Wayland なら出る、X11 なら出ない）
 - GNOME Wayland で「XWayland アプリからのみ取り込む」バナーが出るか（要件 11.5）
 - トレイ。AppIndicator が無い環境ではアイコンが出ない。その場合はホットキーで操作する
 - AppImage / deb / rpm それぞれの起動
