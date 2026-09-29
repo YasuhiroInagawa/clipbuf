@@ -86,13 +86,16 @@
     }
   });
 
-  /** Row-level keyboard activation (focus is programmatic, tabindex -1). The window-level
-   *  handler in MainWindow covers the common case; stopPropagation avoids a double transfer. */
+  /**
+   * Enter on a focused row, but only while it is the selected one. A row carries `tabindex="-1"`,
+   * so clicking it leaves the focus there; acting on focus alone made Enter re-transfer the row
+   * clicked earlier instead of the row the arrow keys had moved to. When this row is not the
+   * selected one the event is left to bubble, and MainWindow transfers the selected row.
+   */
   function onKeydown(e: KeyboardEvent): void {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && selected) {
       e.preventDefault();
       e.stopPropagation();
-      onSelect();
       onTransfer(e.shiftKey ? 'plain' : 'options');
     }
   }

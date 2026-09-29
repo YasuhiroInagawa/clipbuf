@@ -307,6 +307,27 @@ describe('MainWindow — keyboard', () => {
     await waitFor(() => expect(f.hidden).toBe(1));
   });
 
+  // A row carries tabindex="-1", so clicking it leaves the focus there. While the row handled
+  // Enter itself, that stale focus won: Enter re-transferred the clicked row and stopped the
+  // event before the window handler could act on the row the arrows had selected. From the
+  // outside it looked as though Enter did nothing, because the clipboard did not change.
+  it('transfers the selected row even when another row still holds the focus', async () => {
+    const f = fake();
+    const { container } = await mount(f);
+    const rows = [...container.querySelectorAll('.item')] as HTMLElement[];
+    await fireEvent.click(rows[2]);
+    await waitFor(() => expect(f.transfers).toHaveLength(1));
+    const clicked = f.transfers[0][0];
+
+    await fireEvent.keyDown(window, { key: 'ArrowUp' });
+    const selected = get(f.ctx.selection.selectedId);
+    expect(selected).not.toBe(clicked);
+
+    await fireEvent.keyDown(rows[2], { key: 'Enter', bubbles: true });
+    await waitFor(() => expect(f.transfers).toHaveLength(2));
+    expect(f.transfers[1]).toEqual([selected, 'options']);
+  });
+
   it('ignores Enter while a form control has focus', async () => {
     const f = fake();
     await mount(f);
