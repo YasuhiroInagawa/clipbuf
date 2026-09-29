@@ -13,10 +13,11 @@ macOS 以外の環境へ持っていって動作確認するための手引き�
 |---|---|
 | 自動テスト | フロント 145 / Rust 119。CI は 3 OS すべて緑 |
 | 配布物の生成 | 3 OS 分をリリースワークフローで生成確認済み（NSIS / AppImage / deb / rpm / dmg） |
-| **実機での動作確認** | **macOS・Windows**（タスク 6.1）。**Linux は未確認** |
+| **実機での動作確認** | **macOS・Windows・Linux (GNOME Wayland)**。X11 と KDE Plasma は未確認 |
 
-Linux は **一度も実機で動かしていない**。仕様上そこはチェックリスト運用なので
-「仕様は満たしているが動作保証は macOS・Windows だけ」という状態。
+3 OS いずれも一度は実機で動かした。ただし Linux は **GNOME (Wayland) だけ**で、**X11 と
+KDE Plasma (Wayland) は未確認**。この 2 つはアダプタの選択経路が GNOME と違うので、
+いちばん残っているリスクはここ。deb / rpm も起動を確認していない（AppImage のみ）。
 
 Windows は 2026-09-27〜28 に実機（実クリップボード、NSIS インストーラ、アンインストーラ）で
 [platform-checklist.md](platform-checklist.md) の Windows 項目を一通り確認済み。見つかった問題は
@@ -25,6 +26,11 @@ Tauri のデフォルトのままだった件など）。SmartScreen の警告�
 サードパーティ製アンチウイルスが入っていたため確認できていない（[platform-checklist.md](platform-checklist.md)
 に注記あり）。Windows のコード署名は取得しない方針なので、バージョン番号を `1.0.0` に上げる以外の
 作業は完了している。
+
+Linux (GNOME Wayland) は 2026-09-28 に VM で AppImage を確認済み。バナーと XWayland からの
+取り込みは記述どおりだったが、**ネイティブ Wayland アプリのコピーも取り込めた**（Mutter が
+Wayland↔X11 のクリップボードを橋渡ししているため）。「X11/XWayland のみ」という断定を
+「ネイティブ Wayland は取り込めないことがある」に緩め、バナー文言と README も合わせてある。
 
 ## どこが危ないか
 
