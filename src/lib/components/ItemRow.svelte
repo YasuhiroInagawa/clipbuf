@@ -16,10 +16,23 @@
     loadPreview: () => Promise<TransferPreview>;
     /** Wrap long lines in the preview (4.11, 4.12). */
     previewWrap: boolean;
+    /** Changes whenever the keyboard moves the selection: an open preview is stale (4.5.2). */
+    closeToken: number;
+    /** The keyboard settled on this row long enough to show its preview (4.5.3). */
+    keyboardPreview: boolean;
   }
 
-  let { item, selected, highlight, onTransfer, onSelect, loadPreview, previewWrap }: Props =
-    $props();
+  let {
+    item,
+    selected,
+    highlight,
+    onTransfer,
+    onSelect,
+    loadPreview,
+    previewWrap,
+    closeToken,
+    keyboardPreview,
+  }: Props = $props();
   let element: HTMLLIElement | undefined = $state();
   let previewOpen = $state(false);
   /** The pointer travels through a gap between the row and the popover; close only if it has
@@ -78,6 +91,23 @@
   }
 
   $effect(() => () => cancelTimers());
+
+  // The selection moved under the keyboard, so whatever is on screen describes another row.
+  // Closing at once rather than after the grace period: there is no pointer to travel here.
+  $effect(() => {
+    closeToken;
+    cancelTimers();
+    previewOpen = false;
+  });
+
+  // The keyboard came to rest here. ItemList only sets this while the pointer is away from the
+  // list, so this can never open a second popover next to a hovered one.
+  $effect(() => {
+    if (keyboardPreview) {
+      cancelTimers();
+      previewOpen = true;
+    }
+  });
 
   // Keep the keyboard selection visible.
   $effect(() => {

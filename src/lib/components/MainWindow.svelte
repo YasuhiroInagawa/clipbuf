@@ -21,6 +21,10 @@
   const { items, selection, settings, notices, api } = ctx;
   const settingsValue = settings.settings;
 
+  /** Counts arrow-key moves so the list can drop a stale preview and reopen after the keys
+   *  stop (4.5.2, 4.5.3). A counter rather than a flag: every move has to be distinguishable. */
+  let keyboardMoves = $state(0);
+
   const HIGHLIGHT_MS = 600;
   let highlightId: ItemId | null = $state(null);
   let highlightTimer: ReturnType<typeof setTimeout> | null = null;
@@ -82,10 +86,12 @@
       case 'ArrowDown':
         e.preventDefault();
         selection.moveDown();
+        keyboardMoves += 1;
         break;
       case 'ArrowUp':
         e.preventDefault();
         selection.moveUp();
+        keyboardMoves += 1;
         break;
       case 'Enter':
         if (isFormControl(e.target)) return;
@@ -144,6 +150,7 @@
     onTransfer={transfer}
     loadPreview={(id) => api.previewTransfer(id)}
     previewWrap={$settingsValue?.previewWrap ?? true}
+    {keyboardMoves}
   />
   <footer class="footer">
     <button type="button" class="clear" onclick={() => void api.clearItems()}>

@@ -230,6 +230,44 @@ describe('MainWindow — transfer', () => {
 });
 
 describe('MainWindow — full-text preview', () => {
+  it('closes an open preview as soon as the keyboard moves the selection (4.5.2)', async () => {
+    const f = fake();
+    const { container } = await mount(f);
+    await fireEvent.mouseOver(container.querySelectorAll('.item .preview')[1] as HTMLElement);
+    await screen.findByRole('tooltip', {}, { timeout: 2000 });
+    await fireEvent.keyDown(window, { key: 'ArrowDown' });
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  it('reopens for the row the keyboard came to rest on (4.5.3)', async () => {
+    const f = fake();
+    await mount(f);
+    await fireEvent.keyDown(window, { key: 'ArrowDown' });
+    const popover = await screen.findByRole('tooltip', {}, { timeout: 2000 });
+    expect(popover).toHaveTextContent('preview-of-2');
+  });
+
+  it('does not open while the keys are still moving (4.5.3)', async () => {
+    const f = fake();
+    await mount(f);
+    await fireEvent.keyDown(window, { key: 'ArrowDown' });
+    await new Promise((r) => setTimeout(r, 300));
+    await fireEvent.keyDown(window, { key: 'ArrowDown' });
+    await new Promise((r) => setTimeout(r, 300));
+    // 600ms since the first key, but only 300ms since the last one.
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  it('leaves the preview to the pointer while it is over the list (4.5.3)', async () => {
+    const f = fake();
+    const { container } = await mount(f);
+    await fireEvent.mouseEnter(container.querySelector('.list')!);
+    await fireEvent.keyDown(window, { key: 'ArrowDown' });
+    await new Promise((r) => setTimeout(r, 700));
+    // Two popovers side by side would be the alternative, so the keyboard yields.
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
   it('opens the preview with the transferred text when the pointer enters the text (4.5, 4.7)', async () => {
     const f = fake();
     const { container } = await mount(f);
