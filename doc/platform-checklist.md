@@ -19,11 +19,12 @@
 | | |
 |---|---|
 | バージョン | 0.1.0（未リリース。最初の正式リリースは v1.0.0 を予定） |
-| macOS | Apple Silicon / macOS 26.6.2。dev ビルドとローカル署名ビルド |
+| macOS | Apple Silicon / macOS 26.6.2。dev ビルドと、CI がビルドした dmg（ドラフト `v0.0.1-dmg`）からのインストール |
 | Windows | 実機。CI がビルドした NSIS インストーラとアンインストーラ |
 | Linux | GNOME (Wayland) の VM。CI がビルドした AppImage |
 | 未確認の環境 | Intel Mac、X11、KDE Plasma (Wayland)、deb / rpm |
-| 確認できなかった項目 | SmartScreen の警告（検証機のサードパーティ製 AV が Defender を置き換えていた） |
+| 確認できなかった項目 | SmartScreen の警告（検証機のサードパーティ製 AV が Defender を置き換えていた）、Intel Mac での起動（実機なし）、macOS のペーストボード拒否時の案内（拒否される環境を作れない）、更新適用後に警告が出ないこと（公開リリースが無い） |
+| 常用状況 | 2026-09-29 以降、Windows と macOS は常用しながら継続確認中 |
 
 ## 全 OS 共通
 
