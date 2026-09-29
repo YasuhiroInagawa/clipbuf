@@ -90,7 +90,7 @@
       case 'Enter':
         if (isFormControl(e.target)) return;
         e.preventDefault();
-        if (current !== null) void transfer(current, e.shiftKey ? 'plain' : 'options');
+        if (current !== null) void transfer(current, e.shiftKey ? 'raw' : 'options');
         break;
       case 'Delete':
       case 'Backspace':

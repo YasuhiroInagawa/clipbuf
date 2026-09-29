@@ -31,8 +31,8 @@ export const WARNINGS: readonly Warning[] = [
 export type NewlineMode = 'keep' | 'remove' | 'space';
 export const NEWLINE_MODES: readonly NewlineMode[] = ['keep', 'remove', 'space'];
 
-export type TransferMode = 'options' | 'plain' | 'raw';
-export const TRANSFER_MODES: readonly TransferMode[] = ['options', 'plain', 'raw'];
+export type TransferMode = 'options' | 'raw';
+export const TRANSFER_MODES: readonly TransferMode[] = ['options', 'raw'];
 
 export interface TransferOptions {
   keepStyle: boolean;

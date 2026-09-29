@@ -86,21 +86,8 @@
     }
   });
 
-  /**
-   * Enter on a focused row, but only while it is the selected one. A row carries `tabindex="-1"`,
-   * so clicking it leaves the focus there; acting on focus alone made Enter re-transfer the row
-   * clicked earlier instead of the row the arrow keys had moved to. When this row is not the
-   * selected one the event is left to bubble, and MainWindow transfers the selected row.
-   */
-  function onKeydown(e: KeyboardEvent): void {
-    if (e.key === 'Enter' && selected) {
-      e.preventDefault();
-      e.stopPropagation();
-      onTransfer(e.shiftKey ? 'plain' : 'options');
-    }
-  }
-
-  function alt(mode: TransferMode) {
+  /** Both buttons select their row first, so what is transferred is also what is selected. */
+  function act(mode: TransferMode) {
     return (e: MouseEvent) => {
       e.stopPropagation();
       onSelect();
@@ -109,6 +96,9 @@
   }
 </script>
 
+<!-- Clicking the row only selects it (6.4.1). Nothing but the two buttons and their shortcuts
+     writes to the clipboard, so the clipboard never changes while the user is only looking. -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
 <li
   bind:this={element}
   role="option"
@@ -118,13 +108,8 @@
   class:highlight
   data-id={item.id}
   aria-selected={selected}
-  onmouseenter={onSelect}
   onmouseleave={requestClosePreview}
-  onkeydown={onKeydown}
-  onclick={() => {
-    onSelect();
-    onTransfer('options');
-  }}
+  onclick={onSelect}
 >
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="text" onmouseover={requestOpenPreview} onfocusin={requestOpenPreview}>
@@ -132,16 +117,18 @@
   </div>
   <WarningIcons warnings={item.warnings} newlineKinds={newlineKindsIn(item.text)} />
   <span class="actions">
-    <button type="button" data-mode="plain" title={$t('list.transferPlain')} onclick={alt('plain')}>
-      {$t('list.plainShort')}
+    <button
+      type="button"
+      data-mode="options"
+      title={$t('list.transferOptions')}
+      onclick={act('options')}
+    >
+      {$t('list.optionsShort')}
     </button>
-    {#if item.hasStyle}
-      <!-- Only meaningful for items that carry formatting: without it the result would be
-           the same as a row click (6.4.1). -->
-      <button type="button" data-mode="raw" title={$t('list.transferRaw')} onclick={alt('raw')}>
-        {$t('list.rawShort')}
-      </button>
-    {/if}
+    <!-- Shown on every row, formatted or not: it is the only way past the toggles (6.4). -->
+    <button type="button" data-mode="raw" title={$t('list.transferRaw')} onclick={act('raw')}>
+      {$t('list.rawShort')}
+    </button>
   </span>
 </li>
 

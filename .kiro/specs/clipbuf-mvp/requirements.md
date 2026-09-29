@@ -106,14 +106,16 @@ clipbuf は、デスクトップ（Windows / macOS / Linux）でアプリ間の�
 **Objective:** As a ユーザー, I want リストの項目を 1 操作でクリップボードに戻せること, so that すぐに貼り付けできる
 
 #### Acceptance Criteria
-1. When ユーザーが項目の行をクリックする, the clipbuf shall その時点の転送オプションを適用した内容をクリップボードへ書き込む
-2. When ユーザーがキーボードで項目を選択して Enter を押す, the clipbuf shall クリックと同じ転送を行う
+1. When ユーザーが「変換して転送」を選ぶ, the clipbuf shall その時点の転送オプションを適用した内容をクリップボードへ書き込む
+2. When ユーザーがキーボードで項目を選択して Enter を押す, the clipbuf shall 「変換して転送」と同じ転送を行う
+2.1. When ユーザーがキーボードで項目を選択して Shift+Enter を押す, the clipbuf shall 「元のまま転送」と同じ転送を行う
 3. The clipbuf shall キーボードの上下操作でリスト内の選択項目を移動できるようにする
-4. The clipbuf shall 各項目の行に「プレーンテキストで転送」のボタンを常時表示し、警告アイコンと区別できる見た目にする
-4.1. Where 項目に書式付きデータが含まれる, the clipbuf shall その行にのみ「元のまま転送」のボタンを追加で表示する
-5. When ユーザーが「プレーンテキストで転送」を選ぶ, the clipbuf shall 転送オプションの設定にかかわらず、書式を除いたテキスト本文のみを書き込む
+3.1. The clipbuf shall ポインタを行に重ねただけでは選択を移動しない
+4. The clipbuf shall 各項目の行に「変換して転送」と「元のまま転送」の 2 つのボタンを常時表示し、警告アイコンと区別できる見た目にする
+4.1. The clipbuf shall この 2 つのボタンとそのショートカット以外の操作でクリップボードを書き換えない。行のクリックは選択のみを行う
+5. The clipbuf shall 転送の種類を「変換して転送」と「元のまま転送」の 2 つに限り、プレーンテキスト専用の転送は設けない
 6. When ユーザーが「元のまま転送」を選ぶ, the clipbuf shall 転送オプションの設定にかかわらず、取り込んだ内容（テキスト本文と書式付きデータ）をそのまま書き込む
-6.1. The clipbuf shall 「プレーンテキストで転送」と「元のまま転送」の説明に、テキスト変換が適用されないことを明示する
+6.1. The clipbuf shall 「元のまま転送」の説明に、転送オプションが適用されないことを明示する
 7. When 転送が完了する, the clipbuf shall 転送した行を短時間ハイライトして完了を示す
 8. When 転送が完了する, the clipbuf shall ウィンドウの表示状態とリストの順序を変更しない
 9. The clipbuf shall 転送によってリスト上の元の項目のデータを変更しない

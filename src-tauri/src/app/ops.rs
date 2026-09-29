@@ -40,7 +40,6 @@ fn resolve_transfer(
             item.rtf.clone(),
             false,
         ),
-        TransferMode::Plain => (item.text.clone(), None, None, false),
         TransferMode::Options => {
             let keep_style = options.keep_style && item.has_style();
             if keep_style && options.has_text_transform() {

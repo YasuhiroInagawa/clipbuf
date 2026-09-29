@@ -31,14 +31,14 @@ impl TransferOptions {
     }
 }
 
-/// Which transfer action the user chose (6.1, 6.5, 6.6).
+/// Which of the two transfer actions the user chose (6.1, 6.5, 6.6). There are two on purpose:
+/// either the options apply, or nothing is touched at all. A plain-text-only mode used to sit
+/// between them, and having three ways to copy one row confused more than it helped.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum TransferMode {
     /// Apply the current `TransferOptions`.
     Options,
-    /// Plain text only, ignoring options.
-    Plain,
     /// Text plus any style data exactly as captured, ignoring options.
     Raw,
 }

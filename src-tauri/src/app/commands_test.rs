@@ -151,26 +151,6 @@ fn options_uses_the_configured_tab_width() {
 }
 
 #[test]
-fn plain_mode_writes_text_only_regardless_of_options() {
-    let f = fixture();
-    let id = push(&f.state, STYLED, Some(HTML));
-    set_transfer(
-        &f.state,
-        TransferOptions {
-            keep_style: true,
-            newline: NewlineMode::Remove,
-            ..TransferOptions::default()
-        },
-    );
-    let outcome = transfer_item(&f.state, id, TransferMode::Plain).unwrap();
-    assert!(!outcome.skipped_transforms);
-    let w = f.fake.written();
-    assert_eq!(w[0].text, STYLED);
-    assert_eq!(w[0].html, None);
-    assert_eq!(w[0].rtf, None);
-}
-
-#[test]
 fn raw_mode_writes_text_and_style_regardless_of_options() {
     let f = fixture();
     let id = push(&f.state, STYLED, Some(HTML));
@@ -204,11 +184,7 @@ fn transfer_never_mutates_the_buffered_item() {
         },
     );
     let before = list_items(&f.state);
-    for mode in [
-        TransferMode::Options,
-        TransferMode::Plain,
-        TransferMode::Raw,
-    ] {
+    for mode in [TransferMode::Options, TransferMode::Raw] {
         transfer_item(&f.state, id, mode).unwrap();
     }
     assert_eq!(list_items(&f.state), before);
@@ -226,14 +202,14 @@ fn transfer_never_mutates_the_buffered_item() {
 fn transfer_errors_carry_only_a_kind() {
     let f = fixture();
     assert_eq!(
-        transfer_item(&f.state, 42, TransferMode::Plain)
+        transfer_item(&f.state, 42, TransferMode::Raw)
             .unwrap_err()
             .kind,
         ErrorKind::ItemNotFound
     );
     let id = push(&f.state, "x", None);
     f.fake.fail_writes(true);
-    let err = transfer_item(&f.state, id, TransferMode::Plain).unwrap_err();
+    let err = transfer_item(&f.state, id, TransferMode::Raw).unwrap_err();
     assert_eq!(err.kind, ErrorKind::WriteFailed);
     assert_eq!(
         serde_json::to_string(&err).unwrap(),

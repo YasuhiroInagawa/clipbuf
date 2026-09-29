@@ -148,11 +148,11 @@ describe('MainWindow — list', () => {
 });
 
 describe('MainWindow — transfer', () => {
-  it('clicking a row transfers with options and highlights it briefly (6.1, 6.7)', async () => {
+  it('the convert button transfers with options and highlights the row briefly (6.1, 6.7)', async () => {
     const f = fake();
     const { container } = await mount(f);
     const row = container.querySelectorAll('.item')[1];
-    await fireEvent.click(row.querySelector('.preview')!);
+    await fireEvent.click(row.querySelector('button[data-mode="options"]')!);
     await waitFor(() => expect(f.transfers).toEqual([[2, 'options']]));
     await waitFor(() => expect(row).toHaveClass('highlight'));
     // list order and selection are unchanged (6.8)
@@ -161,60 +161,70 @@ describe('MainWindow — transfer', () => {
     expect(get(f.ctx.selection.selectedId)).toBe(2);
   });
 
-  it('shows a labelled plain button on every row without hovering (6.4)', async () => {
+  it('clicking the row only selects it, leaving the clipboard alone (6.4.1)', async () => {
     const f = fake();
     const { container } = await mount(f);
+    const row = container.querySelectorAll('.item')[1];
+    await fireEvent.click(row.querySelector('.preview')!);
+    expect(get(f.ctx.selection.selectedId)).toBe(2);
+    await new Promise((r) => setTimeout(r, 10));
+    expect(f.transfers).toEqual([]);
+  });
+
+  it('does not move the selection when the pointer merely passes over a row (6.3.1)', async () => {
+    const f = fake();
+    const { container } = await mount(f);
+    expect(get(f.ctx.selection.selectedId)).toBe(3);
+    await fireEvent.mouseEnter(container.querySelectorAll('.item')[2]);
+    expect(get(f.ctx.selection.selectedId)).toBe(3);
+  });
+
+  it('shows both labelled buttons on every row, formatted or not (6.4)', async () => {
+    const f = fake({ items: [dto(2, 'styled', ['hasStyle']), dto(1, 'plain text')] });
+    const { container } = await mount(f, 2);
     for (const row of container.querySelectorAll('.item')) {
-      const plain = row.querySelector('button[data-mode="plain"]') as HTMLElement;
-      expect(plain).toBeVisible();
-      expect(plain).toHaveTextContent(en['list.plainShort']);
-      expect(plain).toHaveAttribute('title', en['list.transferPlain']);
-      expect(en['list.transferPlain']).toContain('no text transforms');
+      const convert = row.querySelector('button[data-mode="options"]') as HTMLElement;
+      expect(convert).toBeVisible();
+      expect(convert).toHaveTextContent(en['list.optionsShort']);
+      expect(convert).toHaveAttribute('title', en['list.transferOptions']);
+
+      const raw = row.querySelector('button[data-mode="raw"]') as HTMLElement;
+      expect(raw).toBeVisible();
+      expect(raw).toHaveTextContent(en['list.rawShort']);
+      expect(raw).toHaveAttribute('title', en['list.transferRaw']);
+      // The label alone does not say that the options are skipped, so the tooltip must (6.6.1).
+      expect(en['list.transferRaw']).toContain('no transfer options');
     }
   });
 
-  it('offers the raw button only on items that carry formatting (6.4.1)', async () => {
-    const f = fake({
-      items: [dto(2, 'styled', ['hasStyle']), dto(1, 'plain text')],
-    });
-    const { container } = await mount(f, 2);
-    const [styledRow, plainRow] = container.querySelectorAll('.item');
-    const raw = styledRow.querySelector('button[data-mode="raw"]') as HTMLElement;
-    expect(raw).toBeVisible();
-    expect(raw).toHaveTextContent(en['list.rawShort']);
-    expect(raw).toHaveAttribute('title', en['list.transferRaw']);
-    expect(en['list.transferRaw']).toContain('no text transforms');
-    expect(plainRow.querySelector('button[data-mode="raw"]')).toBeNull();
-    expect(plainRow.querySelector('button[data-mode="plain"]')).not.toBeNull();
+  it('there is no third way to copy a row (6.5)', async () => {
+    const f = fake();
+    const { container } = await mount(f);
+    const modes = [...container.querySelectorAll('.item')[0].querySelectorAll('button')].map((b) =>
+      b.getAttribute('data-mode'),
+    );
+    expect(modes).toEqual(['options', 'raw']);
   });
 
-  it('the buttons transfer plain / raw without triggering the row click (6.5, 6.6)', async () => {
-    const f = fake({
-      items: [dto(3, 'third\tx', ['hasStyle']), dto(2, 'second'), dto(1, 'first')],
-    });
+  it('the raw button transfers as captured (6.6)', async () => {
+    const f = fake();
     const { container } = await mount(f);
     const row = container.querySelectorAll('.item')[0];
-    await fireEvent.click(row.querySelector('button[data-mode="plain"]')!);
     await fireEvent.click(row.querySelector('button[data-mode="raw"]')!);
-    await waitFor(() =>
-      expect(f.transfers).toEqual([
-        [3, 'plain'],
-        [3, 'raw'],
-      ]),
-    );
+    await waitFor(() => expect(f.transfers).toEqual([[3, 'raw']]));
   });
 
   it('reports skipped transforms as an info notice (7.5)', async () => {
     const f = fake({ outcome: { skippedTransforms: true } });
     const { container } = await mount(f);
-    await fireEvent.click(container.querySelector('.item .preview')!);
+    await fireEvent.click(container.querySelector('button[data-mode="options"]')!);
     expect(await screen.findByRole('status')).toHaveTextContent(en['notice.transformsSkipped']);
   });
 
   it('reports a write failure as an error notice (6.10)', async () => {
     const f = fake({ reject: { kind: 'writeFailed' } });
     const { container } = await mount(f);
-    await fireEvent.click(container.querySelector('.item .preview')!);
+    await fireEvent.click(container.querySelector('button[data-mode="options"]')!);
     expect(await screen.findByRole('alert')).toHaveTextContent(en['notice.writeFailed']);
   });
 });
@@ -280,7 +290,7 @@ describe('MainWindow — full-text preview', () => {
 });
 
 describe('MainWindow — keyboard', () => {
-  it('moves the selection with arrows and transfers with Enter / Shift+Enter (6.2, 6.3)', async () => {
+  it('moves with arrows, Enter converts and Shift+Enter takes it as captured (6.2, 6.2.1, 6.3)', async () => {
     const f = fake();
     await mount(f);
     await fireEvent.keyDown(window, { key: 'ArrowDown' });
@@ -293,7 +303,7 @@ describe('MainWindow — keyboard', () => {
     await waitFor(() =>
       expect(f.transfers).toEqual([
         [2, 'options'],
-        [2, 'plain'],
+        [2, 'raw'],
       ]),
     );
   });
@@ -307,25 +317,23 @@ describe('MainWindow — keyboard', () => {
     await waitFor(() => expect(f.hidden).toBe(1));
   });
 
-  // A row carries tabindex="-1", so clicking it leaves the focus there. While the row handled
-  // Enter itself, that stale focus won: Enter re-transferred the clicked row and stopped the
-  // event before the window handler could act on the row the arrows had selected. From the
-  // outside it looked as though Enter did nothing, because the clipboard did not change.
+  // A row carries tabindex="-1", so clicking it leaves the focus there. The row used to handle
+  // Enter itself, and that stale focus won: Enter re-transferred the row clicked earlier and
+  // stopped the event before the window handler could act on the row the arrows had selected.
+  // From the outside it looked as though Enter did nothing, because the clipboard did not change.
   it('transfers the selected row even when another row still holds the focus', async () => {
     const f = fake();
     const { container } = await mount(f);
     const rows = [...container.querySelectorAll('.item')] as HTMLElement[];
     await fireEvent.click(rows[2]);
-    await waitFor(() => expect(f.transfers).toHaveLength(1));
-    const clicked = f.transfers[0][0];
+    const clicked = get(f.ctx.selection.selectedId);
 
     await fireEvent.keyDown(window, { key: 'ArrowUp' });
     const selected = get(f.ctx.selection.selectedId);
     expect(selected).not.toBe(clicked);
 
     await fireEvent.keyDown(rows[2], { key: 'Enter', bubbles: true });
-    await waitFor(() => expect(f.transfers).toHaveLength(2));
-    expect(f.transfers[1]).toEqual([selected, 'options']);
+    await waitFor(() => expect(f.transfers).toEqual([[selected, 'options']]));
   });
 
   it('ignores Enter while a form control has focus', async () => {

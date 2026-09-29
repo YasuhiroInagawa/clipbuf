@@ -7,9 +7,10 @@
 clipbuf picks up whatever you copy in other applications and keeps the last N items, one line
 each. It marks the characters you cannot otherwise see — spaces, ideographic spaces, tabs, line
 breaks, non-breaking spaces, zero-width characters — with their own symbol and colour, and warns
-about formatting, platform-dependent characters and mixed line endings. Click a row and clipbuf
-writes it back to the clipboard with the clean-ups you chose applied. The stored item itself is
-never altered.
+about formatting, platform-dependent characters and mixed line endings. Each row has two buttons:
+**Convert** writes it back with the clean-ups you chose applied, **As captured** writes it back
+untouched. Nothing else changes the clipboard — clicking a row only selects it. The stored item is
+never altered either way.
 
 Windows, macOS and Linux. Free and open source (MIT).
 
@@ -22,7 +23,8 @@ Windows, macOS and Linux. Free and open source (MIT).
 - **Warns** — formatting present, leading or trailing whitespace, tabs, platform-dependent
   characters, control characters, mixed line endings
 - **Transfers cleanly** — strip formatting, drop or replace line breaks, trim, tabs to spaces,
-  ideographic spaces to ordinary ones, each a toggle
+  ideographic spaces to ordinary ones, each a toggle. `Enter` converts, `Shift+Enter` takes the
+  row as captured
 - **Stays out of the way** — a small always-on-top window, a global hotkey (`Alt+Shift+V` by
   default) and a tray icon
 

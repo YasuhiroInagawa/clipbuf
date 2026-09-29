@@ -370,14 +370,16 @@ flowchart TD
 | 5.7 | BOM・双方向制御・NFC/NFD 混在 | analysis::encoding_notice | Warning::EncodingNotice | — |
 | 5.8 | 警告の説明表示 | WarningIcons（title / tooltip, i18n） | — | — |
 | 5.9 | 非該当は非表示 | WarningIcons | ItemDto.warnings | — |
-| 6.1 | クリックで転送 | ItemRow, commands.transfer_item | transfer_item(mode Options) | 転送 |
-| 6.2 | Enter で転送 | MainWindow キーハンドラ | transfer_item | 転送 |
+| 6.1 | 「変換して転送」でオプション適用の内容を書き込む | ItemRow, commands.transfer_item, ops::resolve_transfer | transfer_item(mode=options) | 転送 |
+| 6.2 | Enter は「変換して転送」と同じ | MainWindow（window keydown） | transfer_item(mode=options) | 転送 |
+| 6.2.1 | Shift+Enter は「元のまま転送」と同じ | MainWindow（window keydown） | transfer_item(mode=raw) | 転送 |
 | 6.3 | 上下で選択移動 | selection store, MainWindow | — | — |
-| 6.4 | プレーン転送ボタンを常時表示 | ItemRow | — | — |
-| 6.4.1 | 原文転送は書式あり行のみ | ItemRow（`item.hasStyle`） | ItemDto.hasStyle | — |
-| 6.6.1 | 変換非適用を説明に明示 | ItemRow（title）, locales | — | — |
-| 6.5 | プレーンで転送 | commands.transfer_item | mode Plain | 転送 |
+| 6.3.1 | ホバーでは選択を移動しない | ItemRow（mouseenter で選択しない） | — | — |
+| 6.4 | 行に 2 ボタンを常時表示 | ItemRow | ItemDto | — |
+| 6.4.1 | 行クリックは選択のみ。他の操作で書き換えない | ItemRow（onclick=onSelect のみ） | — | — |
+| 6.5 | 転送は 2 種類のみ（plain 専用モードなし） | TransferMode（options / raw） | 契約 fixture transferModes | — |
 | 6.6 | 元のまま転送 | commands.transfer_item | mode Raw | 転送 |
+| 6.6.1 | 変換非適用を説明に明示 | ItemRow（title）, locales | — | — |
 | 6.7 | 完了ハイライト | ItemRow, Notice | TransferOutcome | 転送 |
 | 6.8 | 表示状態・順序を変えない | commands（Buffer を変更しない）, MainWindow | — | 転送 |
 | 6.9 | 元データ非破壊 | transform（新文字列を返す）, Buffer | — | 転送 |

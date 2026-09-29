@@ -46,14 +46,7 @@ fn enums_round_trip() {
         vec![NewlineMode::Keep, NewlineMode::Remove, NewlineMode::Space]
     );
     let transfer: Vec<TransferMode> = round_trip("transferModes");
-    assert_eq!(
-        transfer,
-        vec![
-            TransferMode::Options,
-            TransferMode::Plain,
-            TransferMode::Raw
-        ]
-    );
+    assert_eq!(transfer, vec![TransferMode::Options, TransferMode::Raw]);
     let kinds: Vec<ErrorKind> = round_trip("errorKinds");
     assert_eq!(kinds.len(), 7);
     let caps: Vec<CaptureCapability> = round_trip("captureCapabilities");

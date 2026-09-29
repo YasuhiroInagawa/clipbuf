@@ -23,7 +23,7 @@
     "fullwidthToSpace": true
   },
   "newlineModes": ["keep", "remove", "space"],
-  "transferModes": ["options", "plain", "raw"],
+  "transferModes": ["options", "raw"],
   "settings": {
     "version": 1,
     "capacity": 50,

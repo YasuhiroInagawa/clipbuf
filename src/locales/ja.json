@@ -2,8 +2,7 @@
   "app.name": "clipbuf",
   "list.empty": "他のアプリでテキストをコピーすると、ここに表示されます。",
   "list.transfer": "クリップボードへ転送",
-  "list.transferPlain": "書式を捨ててテキストだけを転送します（改行・空白の変換はしません）",
-  "list.transferRaw": "取り込んだままの書式付きで転送します（改行・空白の変換はしません）",
+  "list.transferRaw": "取り込んだまま戻します（転送オプションは適用しません）",
   "list.remove": "削除",
   "list.clear": "すべて削除",
   "list.truncated": "…",
@@ -60,7 +59,6 @@
   "transfer.title": "転送オプション",
   "preview.empty": "（空のテキスト）",
   "preview.truncated": "プレビューは先頭 20,000 文字までです。",
-  "list.plainShort": "プレーン",
   "list.rawShort": "原文",
   "transfer.style": "書式",
   "transfer.style.keep": "保持",
@@ -102,5 +100,7 @@
   "tray.about": "clipbuf について",
   "tray.quit": "clipbuf を終了",
   "window.settings.title": "clipbuf - 設定",
-  "window.about.title": "clipbuf について"
+  "window.about.title": "clipbuf について",
+  "list.optionsShort": "変換",
+  "list.transferOptions": "転送オプションを適用してクリップボードへ戻します"
 }

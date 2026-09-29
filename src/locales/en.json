@@ -2,8 +2,7 @@
   "app.name": "clipbuf",
   "list.empty": "Copy text in another app and it will appear here.",
   "list.transfer": "Copy to clipboard",
-  "list.transferPlain": "Copy the text only, formatting dropped (no text transforms)",
-  "list.transferRaw": "Copy exactly as captured, formatting kept (no text transforms)",
+  "list.transferRaw": "Copy back exactly as captured (no transfer options)",
   "list.remove": "Remove",
   "list.clear": "Clear all",
   "list.truncated": "…",
@@ -60,8 +59,7 @@
   "transfer.title": "Transfer options",
   "preview.empty": "(empty text)",
   "preview.truncated": "Preview truncated to the first 20,000 characters.",
-  "list.plainShort": "Plain",
-  "list.rawShort": "Original",
+  "list.rawShort": "As captured",
   "transfer.style": "Formatting",
   "transfer.style.keep": "Keep",
   "transfer.style.strip": "Strip",
@@ -102,5 +100,7 @@
   "tray.about": "About clipbuf",
   "tray.quit": "Quit clipbuf",
   "window.settings.title": "clipbuf - Settings",
-  "window.about.title": "clipbuf - About"
+  "window.about.title": "clipbuf - About",
+  "list.optionsShort": "Convert",
+  "list.transferOptions": "Copy back with the transfer options applied"
 }
