@@ -6,6 +6,7 @@
 //! | [`ITEMS_CHANGED`] | `Vec<`[`ItemDto`](crate::model::ItemDto)`>` |
 //! | [`SETTINGS_CHANGED`] | [`Settings`](crate::model::Settings) |
 //! | [`WINDOW_SHOWN`] | `()` |
+//! | [`WINDOW_HIDDEN`] | `()` |
 //! | [`CAPTURE_STATUS`] | [`CaptureStatus`](crate::model::CaptureStatus) |
 
 use tauri::Emitter;
@@ -20,6 +21,10 @@ pub const ITEMS_CHANGED: &str = "clipbuf://items-changed";
 pub const SETTINGS_CHANGED: &str = "clipbuf://settings-changed";
 /// The main window was just shown by hotkey, tray or single-instance (8.3).
 pub const WINDOW_SHOWN: &str = "clipbuf://window-shown";
+/// The main window was just hidden. The frontend cannot notice this on its own: hiding the
+/// window sends no `mouseleave`, so an open full-text preview would still be there on the next
+/// show, and a second one could open beside it (4.8.1).
+pub const WINDOW_HIDDEN: &str = "clipbuf://window-hidden";
 /// Capture capability at startup or a runtime read failure (11.5, 11.6).
 pub const CAPTURE_STATUS: &str = "clipbuf://capture-status";
 
@@ -29,6 +34,7 @@ pub trait EventSink: Send + Sync {
     fn items_changed(&self, items: Vec<ItemDto>);
     fn settings_changed(&self, settings: Settings);
     fn window_shown(&self);
+    fn window_hidden(&self);
     fn capture_status(&self, status: CaptureStatus);
 }
 
@@ -48,6 +54,9 @@ impl EventSink for TauriSink {
     fn window_shown(&self) {
         let _ = self.0.emit(WINDOW_SHOWN, ());
     }
+    fn window_hidden(&self) {
+        let _ = self.0.emit(WINDOW_HIDDEN, ());
+    }
     fn capture_status(&self, status: CaptureStatus) {
         let _ = self.0.emit(CAPTURE_STATUS, status);
     }
@@ -66,6 +75,7 @@ mod tests {
             "itemsChanged": ITEMS_CHANGED,
             "settingsChanged": SETTINGS_CHANGED,
             "windowShown": WINDOW_SHOWN,
+            "windowHidden": WINDOW_HIDDEN,
             "captureStatus": CAPTURE_STATUS,
         });
         assert_eq!(actual, expected);

@@ -141,6 +141,7 @@ export const EVENT = {
   itemsChanged: 'clipbuf://items-changed',
   settingsChanged: 'clipbuf://settings-changed',
   windowShown: 'clipbuf://window-shown',
+  windowHidden: 'clipbuf://window-hidden',
   captureStatus: 'clipbuf://capture-status',
 } as const;
 
@@ -150,5 +151,6 @@ export interface EventPayload {
   [EVENT.itemsChanged]: ItemDto[];
   [EVENT.settingsChanged]: Settings;
   [EVENT.windowShown]: null;
+  [EVENT.windowHidden]: null;
   [EVENT.captureStatus]: CaptureStatus;
 }

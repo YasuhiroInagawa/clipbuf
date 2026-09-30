@@ -24,6 +24,10 @@ export function onWindowShown(cb: () => void): Promise<UnlistenFn> {
   return listen<null>(EVENT.windowShown, () => cb());
 }
 
+export function onWindowHidden(cb: () => void): Promise<UnlistenFn> {
+  return listen<null>(EVENT.windowHidden, () => cb());
+}
+
 export function onCaptureStatus(cb: (status: CaptureStatus) => void): Promise<UnlistenFn> {
   return listen<CaptureStatus>(EVENT.captureStatus, (e) => cb(e.payload));
 }
@@ -33,5 +37,6 @@ export const events = {
   onItemsChanged,
   onSettingsChanged,
   onWindowShown,
+  onWindowHidden,
   onCaptureStatus,
 } as const;
