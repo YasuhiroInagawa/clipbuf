@@ -33,6 +33,7 @@ impl EventSink for RecordingSink {
         self.0.lock().unwrap().settings_changed.push(settings);
     }
     fn window_shown(&self) {}
+    fn window_hidden(&self) {}
     fn capture_status(&self, _status: CaptureStatus) {}
 }
 

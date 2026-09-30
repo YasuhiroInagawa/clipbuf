@@ -35,6 +35,7 @@ export interface MainApi {
   getPlatformInfo(): Promise<PlatformInfo>;
   onCaptureStatus(cb: (status: CaptureStatus) => void): Promise<UnlistenFn>;
   onWindowShown(cb: () => void): Promise<UnlistenFn>;
+  onWindowHidden(cb: () => void): Promise<UnlistenFn>;
 }
 
 export interface MainContext {

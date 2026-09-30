@@ -29,6 +29,7 @@ impl EventSink for RecordingSink {
     }
     fn settings_changed(&self, _settings: Settings) {}
     fn window_shown(&self) {}
+    fn window_hidden(&self) {}
     fn capture_status(&self, status: CaptureStatus) {
         let _ = self.0.lock().unwrap().send(Sunk::Status(status));
     }

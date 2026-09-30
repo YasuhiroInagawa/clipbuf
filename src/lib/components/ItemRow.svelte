@@ -94,8 +94,13 @@
 
   // The selection moved under the keyboard, so whatever is on screen describes another row.
   // Closing at once rather than after the grace period: there is no pointer to travel here.
+  // Capturing the value at mount is the point: the effect below acts on a change, and
+  // must not fire on the first run.
+  // svelte-ignore state_referenced_locally
+  let lastCloseToken = closeToken;
   $effect(() => {
-    closeToken;
+    if (closeToken === lastCloseToken) return;
+    lastCloseToken = closeToken;
     cancelTimers();
     previewOpen = false;
   });

@@ -14,6 +14,8 @@
     previewWrap: boolean;
     /** Incremented by MainWindow on every arrow-key move (4.5.2, 4.5.3). */
     keyboardMoves: number;
+    /** Incremented by MainWindow whenever the window is hidden (4.8.1). */
+    windowHides: number;
   }
 
   let {
@@ -24,15 +26,24 @@
     loadPreview,
     previewWrap,
     keyboardMoves,
+    windowHides,
   }: Props = $props();
+
+  /** Either kind of invalidation is a reason to close; both only ever increase, so any change
+   *  to the sum means one of them happened. */
+  const previewCloseToken = $derived(keyboardMoves + windowHides);
   const selectedId = $derived(selection.selectedId);
 
   /** Reopening after a keyboard move uses the same delay as resting the pointer on a row. */
   const KEYBOARD_PREVIEW_DELAY_MS = 500;
 
   /** True while the pointer is anywhere over the list, the popover included: the pointer then
-   *  owns the preview, and a keyboard-driven one would fight it (4.5.3). */
-  let pointerInside = $state(false);
+   *  owns the preview, and a keyboard-driven one would fight it (4.5.3).
+   *
+   *  Deliberately not `$state`: nothing renders from it, and as reactive state it made the
+   *  keyboard effect below re-run whenever it changed — so clearing it on a hide scheduled the
+   *  very reopen that hide is supposed to prevent. */
+  let pointerInside = false;
   /** The row whose preview the keyboard opened, if any. */
   let keyboardPreviewFor: ItemId | null = $state(null);
   let restTimer: ReturnType<typeof setTimeout> | null = null;
@@ -56,6 +67,24 @@
     };
   });
 
+  // Hiding the window leaves no pointer state behind: the popover would still be open on the
+  // next show, and no mouseleave is coming to close it. Nothing is scheduled to reopen either —
+  // a preview appearing by itself on a window the user just brought back is not wanted (4.8.1).
+  // Capturing the value at mount is the point: the effect below acts on a change, and
+  // must not fire on the first run.
+  // svelte-ignore state_referenced_locally
+  let lastHides = windowHides;
+  $effect(() => {
+    if (windowHides === lastHides) return;
+    lastHides = windowHides;
+    keyboardPreviewFor = null;
+    if (restTimer) clearTimeout(restTimer);
+    restTimer = null;
+    // The pointer may well have been over the list when it vanished, and that mouseleave is
+    // not coming either; leaving the flag set would suppress the keyboard preview for good.
+    pointerInside = false;
+  });
+
   function onPointerEnter(): void {
     pointerInside = true;
     // The pointer takes over: drop the keyboard's claim so it cannot reopen behind the hover.
@@ -68,7 +97,6 @@
 {#if $items.length === 0}
   <p class="empty">{$t('list.empty')}</p>
 {:else}
-  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <ul
     class="list"
     role="listbox"
@@ -85,7 +113,7 @@
         onTransfer={(mode) => onTransfer(item.id, mode)}
         loadPreview={() => loadPreview(item.id)}
         {previewWrap}
-        closeToken={keyboardMoves}
+        closeToken={previewCloseToken}
         keyboardPreview={keyboardPreviewFor === item.id}
       />
     {/each}

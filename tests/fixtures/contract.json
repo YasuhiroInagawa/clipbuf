@@ -103,6 +103,7 @@
     "itemsChanged": "clipbuf://items-changed",
     "settingsChanged": "clipbuf://settings-changed",
     "windowShown": "clipbuf://window-shown",
+    "windowHidden": "clipbuf://window-hidden",
     "captureStatus": "clipbuf://capture-status"
   }
 }

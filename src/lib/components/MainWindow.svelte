@@ -24,6 +24,9 @@
   /** Counts arrow-key moves so the list can drop a stale preview and reopen after the keys
    *  stop (4.5.2, 4.5.3). A counter rather than a flag: every move has to be distinguishable. */
   let keyboardMoves = $state(0);
+  /** Counts hides. Hiding the window sends no mouseleave, so an open preview would survive it
+   *  and a second one could open beside it on the next show (4.8.1). */
+  let windowHides = $state(0);
 
   const HIGHLIGHT_MS = 600;
   let highlightId: ItemId | null = $state(null);
@@ -116,6 +119,7 @@
     void (async () => {
       unlisteners.push(await api.onCaptureStatus(applyCaptureStatus));
       unlisteners.push(await api.onWindowShown(() => selection.selectNewest()));
+      unlisteners.push(await api.onWindowHidden(() => (windowHides += 1)));
       await Promise.all([items.start(), settings.start()]);
       applyCaptureStatus((await api.getPlatformInfo()).capture);
     })();
@@ -151,6 +155,7 @@
     loadPreview={(id) => api.previewTransfer(id)}
     previewWrap={$settingsValue?.previewWrap ?? true}
     {keyboardMoves}
+    {windowHides}
   />
   <footer class="footer">
     <button type="button" class="clear" onclick={() => void api.clearItems()}>

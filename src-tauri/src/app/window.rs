@@ -71,6 +71,9 @@ pub fn hide(app: &AppHandle) {
     if let Some(window) = main_window(app) {
         save_geometry(app);
         let _ = window.hide();
+        // Tell the frontend before it loses the chance to notice: no mouseleave arrives when a
+        // window is hidden, so an open preview has to be dismissed from here (4.8.1).
+        TauriSink(app.clone()).window_hidden();
     }
 }
 

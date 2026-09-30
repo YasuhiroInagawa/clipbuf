@@ -53,6 +53,7 @@ interface Fake {
   cleared: number;
   fireCaptureStatus: (s: CaptureStatus) => void;
   fireWindowShown: () => void;
+  fireWindowHidden: () => void;
 }
 
 function fake(
@@ -69,6 +70,7 @@ function fake(
   const removed: number[] = [];
   let captureCb: ((s: CaptureStatus) => void) | null = null;
   let shownCb: (() => void) | null = null;
+  let hiddenCb: (() => void) | null = null;
   const state = { hidden: 0, cleared: 0 };
   const api: MainApi = {
     listItems: async () => items,
@@ -105,6 +107,10 @@ function fake(
       shownCb = cb;
       return () => {};
     },
+    onWindowHidden: async (cb) => {
+      hiddenCb = cb;
+      return () => {};
+    },
   };
   const ctx = createMainContext(api);
   return {
@@ -120,6 +126,7 @@ function fake(
     },
     fireCaptureStatus: (s) => captureCb?.(s),
     fireWindowShown: () => shownCb?.(),
+    fireWindowHidden: () => hiddenCb?.(),
   };
 }
 
@@ -230,6 +237,38 @@ describe('MainWindow — transfer', () => {
 });
 
 describe('MainWindow — full-text preview', () => {
+  // Hiding the window sends no mouseleave, so without this the popover was still there on the
+  // next show, and hovering another row opened a second one beside it.
+  it('closes an open preview when the window is hidden (4.8.1)', async () => {
+    const f = fake();
+    const { container } = await mount(f);
+    await fireEvent.mouseOver(container.querySelectorAll('.item .preview')[1] as HTMLElement);
+    await screen.findByRole('tooltip', {}, { timeout: 2000 });
+    f.fireWindowHidden();
+    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
+  });
+
+  it('does not bring a preview back by itself after being hidden (4.8.1)', async () => {
+    const f = fake();
+    const { container } = await mount(f);
+    await fireEvent.mouseEnter(container.querySelector('.list')!);
+    await fireEvent.keyDown(window, { key: 'ArrowDown' });
+    f.fireWindowHidden();
+    await new Promise((r) => setTimeout(r, 700));
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  // The pointer was over the list when it vanished, so that mouseleave never arrived either.
+  it('still lets the keyboard open a preview after a hide (4.8.1, 4.5.3)', async () => {
+    const f = fake();
+    const { container } = await mount(f);
+    await fireEvent.mouseEnter(container.querySelector('.list')!);
+    f.fireWindowHidden();
+    await fireEvent.keyDown(window, { key: 'ArrowDown' });
+    const popover = await screen.findByRole('tooltip', {}, { timeout: 2000 });
+    expect(popover).toHaveTextContent('preview-of-2');
+  });
+
   it('closes an open preview as soon as the keyboard moves the selection (4.5.2)', async () => {
     const f = fake();
     const { container } = await mount(f);
