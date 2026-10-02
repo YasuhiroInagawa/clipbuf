@@ -4,6 +4,7 @@
 </script>
 
 <script lang="ts">
+  import { untrack } from 'svelte';
   import type { TransferPreview } from '$lib/ipc/types';
   import {
     TOKEN_SYMBOL,
@@ -27,9 +28,12 @@
     onPointerLeave?: () => void;
     /** Wrap long lines instead of scrolling sideways (4.11, 4.12). */
     wrap: boolean;
+    /** Changes when the transfer options change. The text shown here is the result of applying
+     *  them, so a change makes what is on screen stale and it has to be fetched again (4.7.1). */
+    reloadKey: string;
   }
 
-  let { load, anchorEl, onPointerEnter, onPointerLeave, wrap }: Props = $props();
+  let { load, anchorEl, onPointerEnter, onPointerLeave, wrap, reloadKey }: Props = $props();
 
   let preview: TransferPreview | null = $state(null);
   let box: HTMLDivElement | undefined = $state();
@@ -81,8 +85,17 @@
   );
 
   $effect(() => {
+    // Exactly one thing re-runs this: the options the text was produced with (4.7.1). Reading
+    // the key is what subscribes to them; the value itself is not needed here.
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    reloadKey;
+    // `load` is read untracked on purpose. The parents rebuild that closure on any re-render,
+    // and tracking it would refetch for changes that cannot alter the text, such as `wrap`.
+    // (Not asserted in this component's tests: testing-library's `rerender` replaces every prop
+    // at once, so it cannot tell a change in one prop from a change in another.)
+    const requestPreview = untrack(() => load);
     let cancelled = false;
-    void load().then((p) => {
+    void requestPreview().then((p) => {
       if (!cancelled) preview = p;
     });
     return () => {

@@ -239,6 +239,18 @@ describe('MainWindow — transfer', () => {
 describe('MainWindow — full-text preview', () => {
   // Hiding the window sends no mouseleave, so without this the popover was still there on the
   // next show, and hovering another row opened a second one beside it.
+  it('refetches while open when the transfer options change (4.7.1)', async () => {
+    const f = fake();
+    const { container } = await mount(f);
+    await fireEvent.mouseOver(container.querySelectorAll('.item .preview')[1] as HTMLElement);
+    const popover = await screen.findByRole('tooltip', {}, { timeout: 2000 });
+    expect(f.previews).toEqual([2]);
+    expect(popover).toBeInTheDocument();
+
+    await f.ctx.settings.update({ ...settings, transfer: { ...settings.transfer, trim: true } });
+    await waitFor(() => expect(f.previews).toEqual([2, 2]));
+  });
+
   it('closes an open preview when the window is hidden (4.8.1)', async () => {
     const f = fake();
     const { container } = await mount(f);

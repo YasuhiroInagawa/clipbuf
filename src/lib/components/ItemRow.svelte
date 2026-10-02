@@ -20,6 +20,8 @@
     closeToken: number;
     /** The keyboard settled on this row long enough to show its preview (4.5.3). */
     keyboardPreview: boolean;
+    /** Changes when the transfer options change, so an open preview refetches (4.7.1). */
+    previewKey: string;
   }
 
   let {
@@ -32,6 +34,7 @@
     previewWrap,
     closeToken,
     keyboardPreview,
+    previewKey,
   }: Props = $props();
   let element: HTMLLIElement | undefined = $state();
   let previewOpen = $state(false);
@@ -174,6 +177,7 @@
     onPointerEnter={openPreview}
     onPointerLeave={requestClosePreview}
     wrap={previewWrap}
+    reloadKey={previewKey}
   />
 {/if}
 

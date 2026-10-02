@@ -16,6 +16,8 @@
     keyboardMoves: number;
     /** Incremented by MainWindow whenever the window is hidden (4.8.1). */
     windowHides: number;
+    /** Changes when the transfer options change, so an open preview refetches (4.7.1). */
+    previewKey: string;
   }
 
   let {
@@ -27,6 +29,7 @@
     previewWrap,
     keyboardMoves,
     windowHides,
+    previewKey,
   }: Props = $props();
 
   /** Either kind of invalidation is a reason to close; both only ever increase, so any change
@@ -115,6 +118,7 @@
         {previewWrap}
         closeToken={previewCloseToken}
         keyboardPreview={keyboardPreviewFor === item.id}
+        {previewKey}
       />
     {/each}
   </ul>

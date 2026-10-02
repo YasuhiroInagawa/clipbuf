@@ -28,6 +28,12 @@
    *  and a second one could open beside it on the next show (4.8.1). */
   let windowHides = $state(0);
 
+  /** Everything `preview_transfer` applies: the transfer toggles and the tab width. An open
+   *  preview shows the result of those, so it has to be fetched again when they move (4.7.1). */
+  const previewKey = $derived(
+    JSON.stringify([$settingsValue?.transfer ?? null, $settingsValue?.tabWidth ?? null]),
+  );
+
   const HIGHLIGHT_MS = 600;
   let highlightId: ItemId | null = $state(null);
   let highlightTimer: ReturnType<typeof setTimeout> | null = null;
@@ -156,6 +162,7 @@
     previewWrap={$settingsValue?.previewWrap ?? true}
     {keyboardMoves}
     {windowHides}
+    {previewKey}
   />
   <footer class="footer">
     <button type="button" class="clear" onclick={() => void api.clearItems()}>

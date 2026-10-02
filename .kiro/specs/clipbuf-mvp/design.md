@@ -356,6 +356,7 @@ flowchart TD
 | 4.5.3 | 移動が止まったら選択行のプレビューを開く（ポインタが一覧上なら開かない） | ItemList（pointerInside, 500ms）, ItemRow | keyboardPreview | — |
 | 4.6 | 可視化を保ち改行を反映 | FullTextPreview, tokenize | PreviewToken | 全文プレビュー |
 | 4.7 | 転送オプション適用後を表示 | commands.preview_transfer, ops::resolve_transfer | TransferPreview | 全文プレビュー |
+| 4.7.1 | 表示中のプレビューをオプション変更で作り直す | MainWindow（previewKey）, ItemList, ItemRow, FullTextPreview | preview_transfer 再呼び出し | 転送 |
 | 4.8 | 両方から外れたら閉じる | ItemRow, FullTextPreview | — | 全文プレビュー |
 | 4.8.1 | 非表示でプレビューを閉じる | window::hide → events::WINDOW_HIDDEN, MainWindow, ItemList, ItemRow | window-hidden | — |
 | 4.9 | プレビュー内をスクロール | FullTextPreview（pointer-events 有効） | — | — |
