@@ -44,16 +44,32 @@ const CAPTURE_DEBOUNCE: Duration = Duration::from_millis(100);
 /// Argument passed by the autostart entry so a login launch stays out of the way (9.5).
 pub const HIDDEN_FLAG: &str = "--hidden";
 
+/// Argument for a second launch: show the running instance's window if it is hidden and hide it
+/// if it is shown, instead of only showing it. It exists for a desktop-environment shortcut
+/// (`clipbuf --toggle`) on Wayland, where the global hotkey cannot be relied on. A first launch
+/// ignores it and starts normally.
+pub const TOGGLE_FLAG: &str = "--toggle";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RuntimeOpts {
     pub start_hidden: bool,
+    pub toggle: bool,
 }
 
 /// Parse process arguments (the first one is the executable and is ignored).
 pub fn parse_runtime_opts<'a>(args: impl Iterator<Item = &'a String>) -> RuntimeOpts {
-    RuntimeOpts {
-        start_hidden: args.skip(1).any(|a| a == HIDDEN_FLAG),
+    let mut opts = RuntimeOpts {
+        start_hidden: false,
+        toggle: false,
+    };
+    for arg in args.skip(1) {
+        match arg.as_str() {
+            HIDDEN_FLAG => opts.start_hidden = true,
+            TOGGLE_FLAG => opts.toggle = true,
+            _ => {}
+        }
     }
+    opts
 }
 
 /// Build the runtime state, start capturing, wire tray / hotkey / window behaviour, sync

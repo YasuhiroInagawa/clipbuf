@@ -250,24 +250,32 @@ fn autostart_failure_is_logged_but_does_not_fail_the_update() {
 }
 
 #[test]
-fn runtime_opts_detect_the_hidden_flag() {
+fn runtime_opts_detect_the_hidden_and_toggle_flags() {
+    let plain = RuntimeOpts {
+        start_hidden: false,
+        toggle: false,
+    };
     let none: [String; 0] = [];
-    assert_eq!(
-        parse_runtime_opts(none.iter()),
-        RuntimeOpts {
-            start_hidden: false
-        }
-    );
+    assert_eq!(parse_runtime_opts(none.iter()), plain);
     let args = ["/path/clipbuf".to_string()];
-    assert_eq!(
-        parse_runtime_opts(args.iter()),
-        RuntimeOpts {
-            start_hidden: false
-        }
-    );
+    assert_eq!(parse_runtime_opts(args.iter()), plain);
     let args = ["/path/clipbuf".to_string(), "--hidden".to_string()];
     assert_eq!(
         parse_runtime_opts(args.iter()),
-        RuntimeOpts { start_hidden: true }
+        RuntimeOpts {
+            start_hidden: true,
+            toggle: false,
+        }
     );
+    let args = ["/path/clipbuf".to_string(), "--toggle".to_string()];
+    assert_eq!(
+        parse_runtime_opts(args.iter()),
+        RuntimeOpts {
+            start_hidden: false,
+            toggle: true,
+        }
+    );
+    // The executable path is never read as a flag, and unknown arguments are ignored.
+    let args = ["--toggle".to_string(), "--other".to_string()];
+    assert_eq!(parse_runtime_opts(args.iter()), plain);
 }

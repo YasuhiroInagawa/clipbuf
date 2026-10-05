@@ -21,9 +21,13 @@ pub fn run() {
     }
     tauri::Builder::default()
         // Must be the first plugin: a second launch hands its args to the running instance,
-        // which brings the main window forward.
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            app::window::show(app);
+        // which brings the main window forward, or flips it when launched with `--toggle`.
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            if app::parse_runtime_opts(args.iter()).toggle {
+                app::window::toggle(app);
+            } else {
+                app::window::show(app);
+            }
         }))
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         // Update check and restart (13.6-13.8); the only network access clipbuf makes (10.3).

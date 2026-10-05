@@ -117,6 +117,22 @@ clipboard, which a compositor has to allow for a window that is not focused.
 Under GNOME on Wayland, clipbuf says so in a banner at the top of the window. Log in to an X11
 session instead if you need to capture from every application reliably.
 
+**On Wayland, the global hotkey is unreliable too.** It relies on X11 key grabs, which a Wayland
+compositor only partly passes on: some key combinations never reach clipbuf, and others reach it
+while also reaching the focused application. Bind a shortcut in your desktop environment instead
+(System Settings → Shortcuts on KDE, Settings → Keyboard → Custom Shortcuts on GNOME) that runs:
+
+```bash
+clipbuf --toggle
+```
+
+This shows the window, or hides it when it is already shown. A second launch only talks to the
+running clipbuf and exits.
+
+The `.deb` needs WebKitGTK 2.40 or newer (`libwebkit2gtk-4.1-0`). That comes with Ubuntu 22.04
+and later once updates are applied, but not with a release that has reached end of life such as
+Ubuntu 22.10.
+
 ## Updates
 
 clipbuf checks for a new version at startup and offers it in a banner. Accept and it downloads,

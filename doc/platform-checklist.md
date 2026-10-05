@@ -151,12 +151,22 @@
 - [ ] 設定画面に「クリップボード確認間隔（ms）」が**出ない**（X11 はイベント駆動）
 - [ ] トレイアイコンが出る（AppIndicator のない環境では出ないことがある。その場合はホットキーで操作）
 - [ ] AppImage / deb / rpm のそれぞれで起動する
+- [ ] WebKitGTK が 2.40 未満の環境（例: Ubuntu 22.10 の 2.38）に deb を入れる → 起動時の
+      `undefined symbol: webkit_uri_scheme_request_get_http_body` ではなく、依存関係
+      （`libwebkit2gtk-4.1-0 (>= 2.40)`）の不足としてインストール時に断られる。サポート中の
+      Ubuntu（22.04 以降、更新適用済み）では普通に入って起動する
 
 ## Linux — KDE Plasma (Wayland)
 
 - [ ] 全アプリからのコピーが取り込める（`wlr-data-control` 経由）（11.4）
 - [ ] 設定画面に「クリップボード確認間隔（ms）」が**出る**
 - [ ] パスワードマネージャの `x-kde-passwordManagerHint` が付いた内容を取り込まない（1.8）
+- [ ] グローバルホットキーは当てにならない（Kubuntu の Wayland セッション、VM で確認済み:
+      `Alt+Shift+V` は効かず、`Ctrl+Shift+Space` は効くが端末にも `^@` が入る）。X11 のキー登録を
+      KWin が一部しか中継しないため。README に「デスクトップ側のショートカットで
+      `clipbuf --toggle` を実行する」回避策を記載済み
+- [ ] システム設定 → ショートカット → カスタムショートカットで `clipbuf --toggle` を実行する
+      コマンドを割り当てる → そのキーで表示・非表示が切り替わる（起動中の clipbuf が 1 つのまま）
 
 ## Linux — GNOME (Wayland)
 
