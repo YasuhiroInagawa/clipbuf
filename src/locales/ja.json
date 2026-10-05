@@ -41,6 +41,7 @@
   "settings.hotkey": "表示/非表示のホットキー",
   "settings.hotkey.record": "キーを押してください…",
   "settings.hotkey.unavailable": "このホットキーは登録できません。直前のホットキーが有効なままです。",
+  "settings.hotkey.osShortcut": "ウィンドウシステムの種類によっては、このホットキーが効かないことがあります。効かない場合は、OS のキーボードショートカット設定で、コマンド「clipbuf --toggle」を実行するショートカットを登録してください。",
   "settings.tabWidth": "タブ幅（空白数）",
   "settings.pollIntervalMs": "クリップボード確認間隔（ms）",
   "settings.autostart": "ログイン時に起動",

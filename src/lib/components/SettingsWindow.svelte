@@ -54,6 +54,15 @@
       platform !== null && (platform.os === 'macos' || platform.displayServer === 'wayland'),
   );
 
+  /**
+   * A Wayland compositor passes the X11 key grab behind the global hotkey on only in part (none
+   * at all on GNOME), so point to the OS's own shortcut settings. The message does not name
+   * Wayland: most people who see it have never heard of it.
+   */
+  const hotkeyMayNotWork = $derived.by(
+    (): boolean => platform !== null && platform.displayServer === 'wayland',
+  );
+
   const languageValue = $derived.by((): string => draft?.language ?? 'system');
 
   function setLanguage(value: string): void {
@@ -172,6 +181,9 @@
         {recording ? $t('settings.hotkey.record') : draft.hotkey}
       </button>
     </div>
+    {#if hotkeyMayNotWork}
+      <p class="hint" data-testid="hint-hotkey-os">{$t('settings.hotkey.osShortcut')}</p>
+    {/if}
     {#if fieldErrors.hotkey}
       <p class="error" data-testid="error-hotkey">{fieldErrors.hotkey}</p>
     {/if}

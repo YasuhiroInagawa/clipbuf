@@ -41,6 +41,7 @@
   "settings.hotkey": "Show/hide hotkey",
   "settings.hotkey.record": "Press keys…",
   "settings.hotkey.unavailable": "This hotkey cannot be registered. The previous one is still active.",
+  "settings.hotkey.osShortcut": "Depending on the type of windowing system, this hotkey may not work. If it doesn't, add a shortcut in your OS keyboard shortcut settings that runs the command \"clipbuf --toggle\".",
   "settings.tabWidth": "Spaces per tab",
   "settings.pollIntervalMs": "Clipboard check interval (ms)",
   "settings.autostart": "Launch at login",

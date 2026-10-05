@@ -105,6 +105,21 @@ describe('SettingsWindow — fields', () => {
     await setup({ platform: WINDOWS });
     expect(screen.queryByLabelText(en['settings.pollIntervalMs'])).toBeNull();
   });
+
+  it('points to the OS shortcut settings where the global hotkey is unreliable', async () => {
+    await setup({ platform: WAYLAND });
+    const hint = await screen.findByTestId('hint-hotkey-os');
+    expect(hint).toHaveTextContent('clipbuf --toggle');
+    // Most people who read this have never heard of Wayland, so it is not named.
+    expect(hint.textContent).not.toMatch(/wayland/i);
+  });
+
+  it('shows no hotkey hint on macOS, where the hotkey works', async () => {
+    await setup({ platform: MAC });
+    // The poll interval appears once the platform info has arrived, so this waits for it.
+    await screen.findByLabelText(en['settings.pollIntervalMs']);
+    expect(screen.queryByTestId('hint-hotkey-os')).toBeNull();
+  });
 });
 
 describe('SettingsWindow — saving', () => {
