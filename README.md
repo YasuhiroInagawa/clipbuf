@@ -36,6 +36,11 @@ Windows, macOS and Linux. Free and open source (MIT).
 - Never writes their contents to a log
 - Ignores anything marked as not-for-monitoring by password managers and the like
 
+clipbuf starts empty, but it shows whatever is on the clipboard when it starts. Another clipboard
+manager that keeps its history across sessions can put the previous text back on the clipboard at
+login, and clipbuf will then show it. KDE's Klipper does this by default; turn off its option to
+save the clipboard contents across sessions if you do not want that.
+
 ## Installing
 
 Grab the build for your system from [Releases](https://github.com/YasuhiroInagawa/clipbuf/releases).
